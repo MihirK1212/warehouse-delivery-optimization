@@ -4,6 +4,8 @@ from beanie import PydanticObjectId
 
 from ..crud import item as item_crud
 from ..models.item import Item
+from ..dtos import ScanData
+
 
 class ItemService:
     @classmethod
@@ -37,7 +39,7 @@ class ItemService:
                 response.append(await item_crud.create_item(item))
             return response
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e)) 
+            raise HTTPException(status_code=500, detail=str(e))
 
     @classmethod
     async def delete_item(cls, item_id: PydanticObjectId) -> None:
@@ -49,5 +51,6 @@ class ItemService:
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
-
-
+    @staticmethod
+    async def scan_item(item_id: PydanticObjectId, scan_data: ScanData) -> Item:
+        return await item_crud.scan_item(item_id, scan_data.weight, scan_data.volume)

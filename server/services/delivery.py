@@ -2,8 +2,10 @@ from typing import List
 from fastapi import HTTPException
 from beanie import PydanticObjectId
 from ..models.delivery import DeliveryTask, Rider
+from ..models.item import Item
 from ..crud import delivery as delivery_crud
 from ..crud import item as item_crud
+from ..schemas import DeliveryInformation
 
 
 class DeliveryService:
@@ -64,26 +66,6 @@ class DeliveryService:
         pass
 
     @classmethod
-    async def add_items_with_delivery_tasks(
-        self, delivery_tasks: List[DeliveryTask]
-    ) -> List[DeliveryTask]:
-        """
-        This method is used to add items with delivery tasks.
-        """
-        delivery_tasks_with_created_items = []
-        for delivery_task in delivery_tasks:
-            created_items = []
-            for item in delivery_task.delivery.items:
-                created_item = await item_crud.create_item(item)
-                created_items.append(created_item)
-            delivery_task.delivery.items = created_items
-            delivery_tasks_with_created_items.append(delivery_task)
-
-        return await delivery_crud.create_delivery_tasks(
-            delivery_tasks_with_created_items
-        )
-
-    @classmethod
     async def get_undispatched_delivery_tasks(self) -> List[DeliveryTask]:
         """
         This method is used to get all undelivered delivery tasks.
@@ -94,3 +76,9 @@ class DeliveryService:
             for delivery_task in delivery_tasks
             if delivery_task.status == "undispatched"
         ]
+
+    @staticmethod
+    async def create_item_and_delivery_task(
+        item: Item, delivery_information: DeliveryInformation
+    ) -> DeliveryTask:
+        return await delivery_crud.create_item_and_delivery_task(item, delivery_information)

@@ -1,6 +1,7 @@
 import datetime
 from pydantic import BaseModel, Field
-from typing import List
+from typing import List, Literal    
+
 
 class ToolScanInformation(BaseModel):
     """
@@ -45,4 +46,18 @@ class RouteSegment(BaseModel):
         ..., description="The polyline of the route segment"
     )
 
+class DeliveryInformation(BaseModel):
+    """
+    This is the delivery information model.
+    """
 
+    expected_delivery_time: datetime.datetime = Field(
+        ..., description="The expected delivery time of the item"
+    )
+    delivery_type: Literal["pickup", "delivery"] = Field(
+        ..., description="The type of delivery"
+    )
+    awb_id: str = Field(..., description="The awb id of the delivery")
+    delivery_location: DeliveryLocation = Field(
+        ..., description="The location of the delivery"
+    )

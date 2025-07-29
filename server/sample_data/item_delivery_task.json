@@ -1,0 +1,30 @@
+{
+    "item": {
+      "name": "item1",
+      "description": "this is item 1",
+      "item_location": {
+        "address": "warehouse location",
+        "coordinate": {
+          "latitude": 10,
+          "longitude": 10
+        }
+      },
+      "timestamp_created": "2025-07-27T18:14:11.398725"
+    },
+    "delivery_task": {
+      "delivery": {
+        "expected_delivery_time": "2025-07-27T12:44:40.767Z",
+        "delivery_type": "delivery",
+        "awb_id": "fasdfsfsdfsddg",
+        "delivery_location": {
+          "address": "string",
+          "coordinate": {
+            "latitude": 0,
+            "longitude": 0
+          }
+        }
+      },
+      "status": "undispatched",
+      "delivery_route": []
+    }
+  }

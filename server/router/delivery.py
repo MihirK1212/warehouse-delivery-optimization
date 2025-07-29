@@ -3,7 +3,9 @@ from typing import List
 from beanie import PydanticObjectId
 
 from ..services.delivery import DeliveryService
-from ..models.delivery import Rider, DeliveryTask
+from ..models.delivery import DeliveryTask
+from ..dtos import AddItemAndDeliveryTask
+
 
 router = APIRouter(prefix="/delivery", tags=["delivery"])
 
@@ -47,6 +49,8 @@ async def add_dynamic_pickup_delivery_tasks(delivery_tasks: List[DeliveryTask]):
     return await DeliveryService.add_dynamic_pickup_delivery_tasks(delivery_tasks)
 
 
-@router.post("/item_delivery")
-async def add_items_with_delivery_tasks(delivery_tasks: List[DeliveryTask]):
-    return await DeliveryService.add_items_with_delivery_tasks(delivery_tasks)
+@router.post("/item_and_task")
+async def add_item_with_delivery_task(payload: AddItemAndDeliveryTask):
+    return await DeliveryService.create_item_and_delivery_task(
+        payload.item, payload.delivery_information
+    )
