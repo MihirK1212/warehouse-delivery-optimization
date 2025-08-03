@@ -11,7 +11,9 @@ class ToolScanInformation(BaseModel):
     volume: float = Field(..., description="The volume of the item")
     weight: float = Field(..., description="The weight of the item")
 
-    timestamp: datetime.datetime = Field(..., description="The timestamp of the item")
+    timestamp: datetime.datetime = Field(
+        datetime.datetime.now(), description="The timestamp of the item"
+    )
 
 
 class Coordinate(BaseModel):

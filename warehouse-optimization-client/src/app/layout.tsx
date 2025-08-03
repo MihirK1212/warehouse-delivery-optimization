@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ReduxProvider } from "./ReduxProvider";
+import Navbar from "@/components/ui/Navbar";
 
 const geistSans = Geist({
 	variable: "--font-geist-sans",
@@ -15,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
 	title: "Warehouse Delivery Optimization",
-	description: "Warehouse Delivery Optimization",
+	description: "Warehouse Delivery Optimization System for managing inventory, dispatching deliveries, and tracking items",
 };
 
 export default function RootLayout({
@@ -27,9 +28,12 @@ export default function RootLayout({
 		<html lang="en">
 			<ReduxProvider>
 				<body
-					className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+					className={`${geistSans.variable} ${geistMono.variable} antialiased bg-gray-50 min-h-screen`}
 				>
-					{children}
+					<Navbar />
+					<main className="min-h-screen">
+						{children}
+					</main>
 				</body>
 			</ReduxProvider>
 		</html>

@@ -3,6 +3,7 @@ import { DeliveryInformation, RouteSegment } from "../common/type";
 import { Rider } from "../rider/type";
 
 export type DeliveryTask  = {
+    id: string;
     items: Item[],
     deliveryInformation: DeliveryInformation,
     rider?: Rider,

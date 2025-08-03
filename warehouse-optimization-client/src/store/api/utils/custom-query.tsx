@@ -6,7 +6,7 @@ import type {
 } from "@reduxjs/toolkit/query";
 
 const baseQuery = fetchBaseQuery({
-  baseUrl: "http://localhost:8000/api",
+  baseUrl: "http://localhost:8000/",
   prepareHeaders: (headers) => {
     const accessToken = localStorage.getItem("accessToken");
     if (accessToken) {

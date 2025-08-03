@@ -8,5 +8,8 @@ export const api = createApi({
     baseQuery: baseQueryWithReauth,
     endpoints: () => ({}),
     tagTypes: [
+        'Item',
+        'DeliveryTask', 
+        'Rider'
     ]
 });

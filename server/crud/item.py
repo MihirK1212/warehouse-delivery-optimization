@@ -49,7 +49,9 @@ async def delete_item(item_id: PydanticObjectId) -> None:
 async def scan_item(item_id: PydanticObjectId, weight: float, volume: float) -> Item:
     item = await Item.get(item_id)
     if item:
-        item.weight = weight
-        item.volume = volume
+        item.tool_scan_information = {
+            "weight": weight,
+            "volume": volume
+        }
         await item.save()
     return item
