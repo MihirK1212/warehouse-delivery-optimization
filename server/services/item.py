@@ -4,7 +4,7 @@ from beanie import PydanticObjectId
 
 from ..crud import item as item_crud
 from ..models.item import Item
-from ..dtos import ScanData
+from ..dtos import ScanDataDTO
 
 
 class ItemService:
@@ -52,5 +52,5 @@ class ItemService:
             raise HTTPException(status_code=500, detail=str(e))
 
     @staticmethod
-    async def scan_item(item_id: PydanticObjectId, scan_data: ScanData) -> Item:
+    async def scan_item(item_id: PydanticObjectId, scan_data: ScanDataDTO) -> Item:
         return await item_crud.scan_item(item_id, scan_data.weight, scan_data.volume)

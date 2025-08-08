@@ -1,13 +1,13 @@
-import { CreateItemRequest, GetItemResponse } from "../item/dto";
-import { GetRiderResponse } from "../rider/dto";
+import { CreateItemDTO, ItemDTO } from "../item/dto";
+import { RiderDTO } from "../rider/dto";
 import { DeliveryInformationDTO } from "../common/dto";
 import { RouteSegmentDTO } from "../common/dto";
 
-export interface GetDeliveryTaskResponse {
+export interface DeliveryTaskDTO {
 	_id?: string;
-	items: GetItemResponse[];
+	items: ItemDTO[];
 	delivery_information: DeliveryInformationDTO;
-	rider?: GetRiderResponse;
+	rider?: RiderDTO;
 	status:
 		| "undispatched"
 		| "dispatched"
@@ -17,12 +17,12 @@ export interface GetDeliveryTaskResponse {
 	delivery_route: RouteSegmentDTO[];
 }
 
-export interface DispatchDeliveryTasksRequest {
+export interface DispatchDeliveryTasksDTO {
 	delivery_task_ids: string[];
 	rider_ids: string[];
 }
 
-export interface CreateItemAndDeliveryTaskRequest {
-	item: CreateItemRequest;
+export interface CreateItemAndDeliveryTaskDTO {
+	item: CreateItemDTO;
 	delivery_information: DeliveryInformationDTO;
 }

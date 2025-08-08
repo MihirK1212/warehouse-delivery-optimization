@@ -34,8 +34,6 @@ export default function DataTable<T extends Record<string, unknown>>({
 	const [sortColumn, setSortColumn] = useState<keyof T | null>(null);
 	const [sortDirection, setSortDirection] = useState<"asc" | "desc">("asc");
 
-	console.log("[ROUTE] selectedItems", selectedItems);
-
 	const handleSort = (column: keyof T) => {
 		if (sortColumn === column) {
 			setSortDirection(sortDirection === "asc" ? "desc" : "asc");

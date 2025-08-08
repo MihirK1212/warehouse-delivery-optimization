@@ -1,5 +1,5 @@
 import { api } from "./base";
-import { GetItemResponse, ScanItemRequest } from "@/types/item/dto";
+import { ItemDTO, ScanItemDTO } from "@/types/item/dto";
 import { Item } from "@/types/item/type";
 import _ from "lodash";
 import moment from "moment";
@@ -12,7 +12,7 @@ const itemAPI = api.injectEndpoints({
 				method: "GET",
 			}),
 			providesTags: ["Item"],
-            transformResponse: (response: GetItemResponse[]): Item[] => {
+            transformResponse: (response: ItemDTO[]): Item[] => {
                 return _.map(response, (item) => ({
                     id: item._id || "",
                     name: item.name,
@@ -30,7 +30,7 @@ const itemAPI = api.injectEndpoints({
 				method: "GET",
 			}),
 			providesTags: (result, error, id) => [{ type: "Item", id }],
-            transformResponse: (response: GetItemResponse): Item => {
+            transformResponse: (response: ItemDTO): Item => {
                 return {
                     id: response._id || "",
                     name: response.name,
@@ -44,7 +44,7 @@ const itemAPI = api.injectEndpoints({
 
 		scanItem: build.mutation<
 			void,
-			{ itemId: string; scanData: ScanItemRequest }
+			{ itemId: string; scanData: ScanItemDTO }
 		>({
 			query: ({ itemId, scanData }) => ({
 				url: `item/${itemId}/scan`,

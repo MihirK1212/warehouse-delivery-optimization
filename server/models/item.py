@@ -1,7 +1,7 @@
 from typing import Optional
 import datetime
 from pydantic import Field
-from beanie import Document
+from beanie import Document, PydanticObjectId
 
 from ..schemas import ToolScanInformation, DeliveryLocation
 
@@ -10,6 +10,11 @@ class Item(Document):
     """
     This is the item model.
     """
+    # id: Optional[PydanticObjectId] = Field(default_factory=PydanticObjectId, alias="_id")
+
+    # class Config:
+    #     validate_by_name = True
+    #     validate_by_alias = True
 
     name: str = Field(..., description="The name of the item")
     description: str = Field(..., description="The description of the item")

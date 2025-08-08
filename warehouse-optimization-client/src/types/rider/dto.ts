@@ -1,4 +1,4 @@
-export interface GetRiderResponse {
+export interface RiderDTO {
     _id?: string;
     name: string;
     age: number;
@@ -7,7 +7,7 @@ export interface GetRiderResponse {
 }
 
 
-export interface CreateRiderRequest {
+export interface CreateRiderDTO {
     name: string;
     age: number;
     bag_volume: number;

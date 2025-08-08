@@ -1,3 +1,4 @@
+from typing import Any
 from fastapi import HTTPException
 from beanie import PydanticObjectId
 
@@ -30,6 +31,15 @@ async def create_rider(rider: Rider) -> Rider:
     new_rider = await rider.create()  
     return new_rider
 
+async def update_rider(rider_id: PydanticObjectId, update_dict: dict[str, Any]) -> Rider:
+    """
+    This function is used to update a rider.
+    """
+    rider = await Rider.get(rider_id)
+    if rider:
+        await rider.set(update_dict)
+    else:
+        raise HTTPException(status_code=404, detail="Rider not found")
 
 async def delete_rider(rider_id: PydanticObjectId) -> None:
     """

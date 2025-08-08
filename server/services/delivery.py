@@ -1,13 +1,16 @@
-from typing import List, Any
+from typing import List, Any, Literal
+from collections import defaultdict
 from fastapi import HTTPException
 from beanie import PydanticObjectId
 
-from ..dtos import AddItemAndDeliveryTask
+from ..dtos import CreateItemAndDeliveryTaskDTO
 from ..models.delivery import DeliveryTask, Rider
 from ..models.item import Item
 from ..crud import delivery as delivery_crud
 from ..crud import item as item_crud
 from ..schemas import DeliveryInformation
+from ..crud import rider as rider_crud
+from ..algorithm.dispatch import DispatchAlgorithm
 from ..crud import rider as rider_crud
 
 
@@ -61,6 +64,7 @@ class DeliveryService:
         ]
 
         riders = await rider_crud.get_riders()
+        riders = [rider for rider in riders if rider.id in rider_ids]
 
         assert all(
             [delivery_task.status == "undispatched" for delivery_task in delivery_tasks]
@@ -72,11 +76,53 @@ class DeliveryService:
             ]
         ), "All delivery tasks must be delivery"
 
-        return {"success": True, "delivery_tasks": delivery_tasks, "riders": riders}
+        for delivery_task in delivery_tasks:
+            await delivery_crud.update_delivery_task(
+                delivery_task.id, {DeliveryTask.status: "dispatching"}
+            )
+
+        try:
+            dispatched_delivery_tasks = DispatchAlgorithm.dispatch(
+                delivery_tasks, riders
+            )
+
+            rider_to_delivery_task_ids = defaultdict(list)
+            for dispatched_delivery_task in dispatched_delivery_tasks:
+                rider_to_delivery_task_ids[dispatched_delivery_task.rider_id].append(
+                    dispatched_delivery_task.delivery_id
+                )
+
+            for dispatched_delivery_task in dispatched_delivery_tasks:
+                await delivery_crud.update_delivery_task(
+                    dispatched_delivery_task.delivery_id,
+                    {
+                        DeliveryTask.rider: dispatched_delivery_task.rider_id,
+                        DeliveryTask.status: "dispatched",
+                    },
+                )
+                await rider_crud.update_rider(
+                    dispatched_delivery_task.rider_id,
+                    {
+                        Rider.delivery_tasks: rider_to_delivery_task_ids[
+                            dispatched_delivery_task.rider_id
+                        ]
+                    },
+                )
+            return {
+                "success": True,
+                "dispatched_delivery_tasks": dispatched_delivery_tasks,
+            }
+
+        except Exception as e:
+            for delivery_task in delivery_tasks:
+                await delivery_crud.update_delivery_task(
+                    delivery_task.id, {DeliveryTask.status: "undispatched"}
+                )
+            raise e
 
     @classmethod
     async def add_dynamic_pickup_delivery_tasks(
-        self, payload: List[AddItemAndDeliveryTask]
+        self, payload: List[CreateItemAndDeliveryTaskDTO]
     ) -> List[DeliveryTask]:
         """
         This method is used to add a dynamic pickup delivery.
@@ -90,8 +136,8 @@ class DeliveryService:
         for pickup_item_and_delivery_task in payload:
             delivery_tasks.append(
                 await self.create_item_and_delivery_task(
-                pickup_item_and_delivery_task.item,
-                pickup_item_and_delivery_task.delivery_information,
+                    pickup_item_and_delivery_task.item,
+                    pickup_item_and_delivery_task.delivery_information,
                 )
             )
 
@@ -116,3 +162,12 @@ class DeliveryService:
         return await delivery_crud.create_item_and_delivery_task(
             item, delivery_information
         )
+
+    @staticmethod
+    async def update_delivery_task_status(
+        delivery_task_id: PydanticObjectId,
+        status: Literal[
+            "undispatched", "dispatching", "dispatched", "completed", "cancelled"
+        ],
+    ) -> DeliveryTask:
+        return await delivery_crud.update_delivery_task_status(delivery_task_id, status)

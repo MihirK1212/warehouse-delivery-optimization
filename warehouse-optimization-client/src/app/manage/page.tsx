@@ -77,28 +77,6 @@ export default function ManagePage() {
           </Link>
         ))}
       </div>
-
-      {/* Quick Stats */}
-      <div className="bg-white rounded-lg shadow p-6">
-        <h3 className="text-lg font-medium text-gray-900 mb-4">Quick Actions</h3>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <button className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-            <div className="text-2xl mb-2">⚡</div>
-            <div className="font-medium text-gray-900">Quick Dispatch</div>
-            <div className="text-sm text-gray-500">Dispatch pending deliveries instantly</div>
-          </button>
-          <button className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-            <div className="text-2xl mb-2">📊</div>
-            <div className="font-medium text-gray-900">View Reports</div>
-            <div className="text-sm text-gray-500">Check delivery performance metrics</div>
-          </button>
-          <button className="p-4 text-left border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
-            <div className="text-2xl mb-2">🔔</div>
-            <div className="font-medium text-gray-900">Notifications</div>
-            <div className="text-sm text-gray-500">Check pending alerts and updates</div>
-          </button>
-        </div>
-      </div>
     </div>
   );
 }

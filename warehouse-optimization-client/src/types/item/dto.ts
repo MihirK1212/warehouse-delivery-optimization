@@ -1,6 +1,6 @@
 import { ToolScanInformationDTO, DeliveryLocationDTO } from "../common/dto";
 
-export interface GetItemResponse {
+export interface ItemDTO {
     _id?: string;
     name: string;
     description: string;
@@ -10,14 +10,14 @@ export interface GetItemResponse {
 }
 
 
-export interface CreateItemRequest {
+export interface CreateItemDTO {
     name: string;
     description: string;
     tool_scan_information?: ToolScanInformationDTO;
     item_location?: DeliveryLocationDTO;
 }
 
-export interface ScanItemRequest {
+export interface ScanItemDTO {
     weight: number;
     volume: number;
 }

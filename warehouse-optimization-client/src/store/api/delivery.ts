@@ -1,8 +1,8 @@
 import { api } from "./base";
 import {
-	CreateItemAndDeliveryTaskRequest,
-	GetDeliveryTaskResponse,
-	DispatchDeliveryTasksRequest,
+	CreateItemAndDeliveryTaskDTO,
+	DeliveryTaskDTO,
+	DispatchDeliveryTasksDTO,
 } from "@/types/delivery/dto";
 import { DeliveryTask } from "@/types/delivery/type";
 import moment from "moment";
@@ -16,7 +16,7 @@ const deliveryAPI = api.injectEndpoints({
 				method: "GET",
 			}),
 			transformResponse: (
-				response: GetDeliveryTaskResponse[]
+				response: DeliveryTaskDTO[]
 			): DeliveryTask[] => {
 				if (Array.isArray(response)) {
 					return _.map(response, (deliveryTask) => ({
@@ -84,7 +84,7 @@ const deliveryAPI = api.injectEndpoints({
 				method: "GET",
 			}),
 			transformResponse: (
-				response: GetDeliveryTaskResponse[]
+				response: DeliveryTaskDTO[]
 			): DeliveryTask[] => {
 				if (Array.isArray(response)) {
 					return _.map(response, (deliveryTask) => ({
@@ -148,7 +148,7 @@ const deliveryAPI = api.injectEndpoints({
 
 		createItemWithDeliveryTask: build.mutation<
 			void,
-			CreateItemAndDeliveryTaskRequest
+			CreateItemAndDeliveryTaskDTO
 		>({
 			query: (payload) => ({
 				url: "delivery/item_and_task",
@@ -160,7 +160,7 @@ const deliveryAPI = api.injectEndpoints({
 
 		dispatchDeliveryTasks: build.mutation<
 			void,
-			DispatchDeliveryTasksRequest
+			DispatchDeliveryTasksDTO
 		>({
 			query: (payload) => ({
 				url: "delivery/dispatch",
@@ -172,7 +172,7 @@ const deliveryAPI = api.injectEndpoints({
 
 		addDynamicPickupDeliveryTasks: build.mutation<
 			void,
-			CreateItemAndDeliveryTaskRequest[]
+			CreateItemAndDeliveryTaskDTO[]
 		>({
 			query: (pickupItems) => ({
 				url: "delivery/pickup",
@@ -180,6 +180,21 @@ const deliveryAPI = api.injectEndpoints({
 				body: pickupItems,
 			}),
 			invalidatesTags: ["DeliveryTask"],
+		}),
+
+		updateDeliveryTaskStatus: build.mutation<
+			void,
+			{ id: string; status: "dispatched" | "in_progress" | "completed" }
+		>({
+			query: ({ id, status }) => ({
+				url: `delivery/${id}/status`,
+				method: "PATCH",
+				body: { status },
+			}),
+			invalidatesTags: (result, error, { id }) => [
+				{ type: "DeliveryTask", id },
+				"DeliveryTask",
+			],
 		}),
 
 		deleteDeliveryTask: build.mutation<void, string>({
@@ -202,5 +217,6 @@ export const {
 	useCreateItemWithDeliveryTaskMutation,
 	useDispatchDeliveryTasksMutation,
 	useAddDynamicPickupDeliveryTasksMutation,
+	useUpdateDeliveryTaskStatusMutation,
 	useDeleteDeliveryTaskMutation,
 } = deliveryAPI;

@@ -1,7 +1,7 @@
 import { api } from "./base";
-import { CreateRiderRequest, GetRiderResponse } from "@/types/rider/dto";
+import { CreateRiderDTO, RiderDTO } from "@/types/rider/dto";
 import { Rider } from "@/types/rider/type";
-import _ from "lodash";
+import _ from "lodash";	
 
 const riderAPI = api.injectEndpoints({
 	endpoints: (build) => ({
@@ -11,7 +11,7 @@ const riderAPI = api.injectEndpoints({
 				method: "GET",
 			}),
 			providesTags: ["Rider"],
-            transformResponse: (response: GetRiderResponse[]): Rider[] => {
+            transformResponse: (response: RiderDTO[]): Rider[] => {
                 return _.map(response, (rider) => ({
                     id: rider._id || "",
                     name: rider.name,
@@ -28,7 +28,7 @@ const riderAPI = api.injectEndpoints({
 				method: "GET",
 			}),
 			providesTags: (result, error, id) => [{ type: "Rider", id }],
-            transformResponse: (response: GetRiderResponse): Rider => {
+            transformResponse: (response: RiderDTO): Rider => {
                 return {
                     id: response._id || "",
                     name: response.name,
@@ -39,7 +39,7 @@ const riderAPI = api.injectEndpoints({
             },
 		}),
 
-		createRiders: build.mutation<void, CreateRiderRequest[]>({
+		createRiders: build.mutation<void, CreateRiderDTO[]>({
 			query: (riders) => ({
 				url: "rider/",
 				method: "POST",

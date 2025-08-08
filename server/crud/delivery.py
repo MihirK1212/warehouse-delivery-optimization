@@ -1,7 +1,8 @@
-from typing import List
+from typing import List, Any, Literal
 from fastapi import HTTPException
 from beanie import PydanticObjectId, WriteRules
 from ..models.delivery import DeliveryTask, Item
+from ..models.rider import Rider
 from ..schemas import DeliveryInformation
 
 
@@ -38,14 +39,14 @@ async def delete_delivery_task(delivery_task_id: PydanticObjectId) -> None:
 
 
 async def update_delivery_task(
-    delivery_task_id: PydanticObjectId, delivery_task: DeliveryTask
+    delivery_task_id: PydanticObjectId, update_dict: dict[str, Any]
 ) -> DeliveryTask:
     """
     This is the function to update a dispatched delivery.
     """
     delivery_task = await DeliveryTask.get(delivery_task_id)
     if delivery_task:
-        await delivery_task.update(delivery_task)
+        await delivery_task.set(update_dict)
     else:
         raise HTTPException(status_code=404, detail="Dispatched delivery not found")
 
@@ -75,8 +76,25 @@ async def _populate_delivery_task_links(delivery_task: DeliveryTask) -> Delivery
     """
     This is the function to populate the delivery task links.
     """
+    if not delivery_task:
+        raise HTTPException(status_code=404, detail="Delivery task not found")
+
     delivery_task.rider = (
-        await delivery_task.rider.fetch() if delivery_task.rider else None
+        await Rider.get(delivery_task.rider.ref.id) if delivery_task.rider else None
     )
-    delivery_task.items = [await item.fetch() for item in delivery_task.items]
+    delivery_task.items = [
+        await Item.get(item.ref.id) for item in delivery_task.items
+    ]
+
     return delivery_task
+
+async def update_delivery_task_status(delivery_task_id: PydanticObjectId, status: Literal["undispatched", "dispatching", "dispatched", "completed", "cancelled"]) -> DeliveryTask:
+    """
+    This is the function to update the status of a delivery task.
+    """
+    delivery_task = await DeliveryTask.get(delivery_task_id)
+    if delivery_task:
+        delivery_task.status = status
+        await delivery_task.save()
+    else:
+        raise HTTPException(status_code=404, detail="Delivery task not found")
