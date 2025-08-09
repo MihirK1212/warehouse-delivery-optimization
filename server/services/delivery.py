@@ -2,8 +2,9 @@ from typing import List, Any, Literal
 from collections import defaultdict
 from fastapi import HTTPException
 from beanie import PydanticObjectId
+import asyncio
 
-from ..dtos import CreateItemAndDeliveryTaskDTO
+from ..dtos import CreateItemAndDeliveryTaskDTO, DeliveryTaskDTO
 from ..models.delivery import DeliveryTask, Rider
 from ..models.item import Item
 from ..crud import delivery as delivery_crud
@@ -12,6 +13,7 @@ from ..schemas import DeliveryInformation
 from ..crud import rider as rider_crud
 from ..algorithm.dispatch import DispatchAlgorithm
 from ..crud import rider as rider_crud
+from ..enums import DeliveryStatus
 
 
 class DeliveryService:
@@ -25,7 +27,7 @@ class DeliveryService:
         return await delivery_crud.get_delivery_task(delivery_task_id)
 
     @classmethod
-    async def get_delivery_tasks(self) -> List[DeliveryTask]:
+    async def get_delivery_tasks(self) -> List[DeliveryTaskDTO]:
         """
         This method is used to get all dispatched deliveries.
         """
@@ -67,7 +69,7 @@ class DeliveryService:
         riders = [rider for rider in riders if rider.id in rider_ids]
 
         assert all(
-            [delivery_task.status == "undispatched" for delivery_task in delivery_tasks]
+            [delivery_task.status == DeliveryStatus.UNDISPATCHED.name for delivery_task in delivery_tasks]
         ), "All delivery tasks must be undispatched"
         assert all(
             [
@@ -78,12 +80,13 @@ class DeliveryService:
 
         for delivery_task in delivery_tasks:
             await delivery_crud.update_delivery_task(
-                delivery_task.id, {DeliveryTask.status: "dispatching"}
+                delivery_task.id, {DeliveryTask.status: DeliveryStatus.DISPATCHING.name}
             )
 
         try:
-            dispatched_delivery_tasks = DispatchAlgorithm.dispatch(
-                delivery_tasks, riders
+            dispatched_delivery_tasks = await asyncio.wait_for(
+                asyncio.to_thread(DispatchAlgorithm.dispatch, delivery_tasks, riders),
+                timeout=10
             )
 
             rider_to_delivery_task_ids = defaultdict(list)
@@ -97,7 +100,7 @@ class DeliveryService:
                     dispatched_delivery_task.delivery_id,
                     {
                         DeliveryTask.rider: dispatched_delivery_task.rider_id,
-                        DeliveryTask.status: "dispatched",
+                        DeliveryTask.status: DeliveryStatus.DISPATCHED.name,
                     },
                 )
                 await rider_crud.update_rider(
@@ -116,7 +119,7 @@ class DeliveryService:
         except Exception as e:
             for delivery_task in delivery_tasks:
                 await delivery_crud.update_delivery_task(
-                    delivery_task.id, {DeliveryTask.status: "undispatched"}
+                    delivery_task.id, {DeliveryTask.status: DeliveryStatus.UNDISPATCHED.name}
                 )
             raise e
 
@@ -144,7 +147,7 @@ class DeliveryService:
         return delivery_tasks
 
     @classmethod
-    async def get_undispatched_delivery_tasks(self) -> List[DeliveryTask]:
+    async def get_undispatched_delivery_tasks(self) -> List[DeliveryTaskDTO]:
         """
         This method is used to get all undelivered delivery tasks.
         """
@@ -152,7 +155,7 @@ class DeliveryService:
         return [
             delivery_task
             for delivery_task in delivery_tasks
-            if delivery_task.status == "undispatched"
+            if delivery_task.status == DeliveryStatus.UNDISPATCHED.name
         ]
 
     @staticmethod
@@ -166,8 +169,16 @@ class DeliveryService:
     @staticmethod
     async def update_delivery_task_status(
         delivery_task_id: PydanticObjectId,
-        status: Literal[
-            "undispatched", "dispatching", "dispatched", "completed", "cancelled"
-        ],
+        status: DeliveryStatus,
     ) -> DeliveryTask:
         return await delivery_crud.update_delivery_task_status(delivery_task_id, status)
+
+    @staticmethod
+    async def get_delivery_tasks_by_rider(rider_id: PydanticObjectId) -> List[DeliveryTaskDTO]:
+        delivery_tasks = await delivery_crud.get_delivery_tasks()
+        return [
+            delivery_task
+            for delivery_task in delivery_tasks
+            if delivery_task.rider is not None and delivery_task.rider.id == rider_id
+            and delivery_task.status != DeliveryStatus.COMPLETED.name
+        ]

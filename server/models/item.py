@@ -10,12 +10,6 @@ class Item(Document):
     """
     This is the item model.
     """
-    # id: Optional[PydanticObjectId] = Field(default_factory=PydanticObjectId, alias="_id")
-
-    # class Config:
-    #     validate_by_name = True
-    #     validate_by_alias = True
-
     name: str = Field(..., description="The name of the item")
     description: str = Field(..., description="The description of the item")
 

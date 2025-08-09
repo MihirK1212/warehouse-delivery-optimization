@@ -4,25 +4,40 @@ from beanie import PydanticObjectId
 
 from ..crud import rider as rider_crud
 from ..models.rider import Rider
+from ..dtos import RiderDTO
+
 
 class RiderService:
     @classmethod
-    async def get_rider(cls, rider_id: PydanticObjectId) -> Rider | None:
+    async def get_rider(cls, rider_id: PydanticObjectId) -> RiderDTO | None:
         """
         This method is used to get a rider by its id.
         """
         try:
-            return await rider_crud.get_rider(rider_id)
+            rider = await rider_crud.get_rider(rider_id)
+            if rider:
+                return RiderDTO(
+                    **rider.model_dump(),
+                    assigned_delivery_task_ids=[delivery_task.ref.id for delivery_task in rider.delivery_tasks]
+                )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
     @classmethod
-    async def get_riders(cls) -> list[Rider] | None:
+    async def get_riders(cls) -> list[RiderDTO] | None:
         """
         This method is used to get all riders.
         """
         try:
-            return await rider_crud.get_riders()
+            riders = await rider_crud.get_riders()
+            if riders:
+                return [
+                    RiderDTO(
+                        **rider.model_dump(),
+                        assigned_delivery_task_ids=[delivery_task.ref.id for delivery_task in rider.delivery_tasks]
+                    )
+                    for rider in riders
+                ]
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
 
@@ -37,7 +52,7 @@ class RiderService:
                 response.append(await rider_crud.create_rider(rider))
             return response
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e)) 
+            raise HTTPException(status_code=500, detail=str(e))
 
     @classmethod
     async def delete_rider(cls, rider_id: PydanticObjectId) -> None:
@@ -47,4 +62,4 @@ class RiderService:
         try:
             return await rider_crud.delete_rider(rider_id)
         except Exception as e:
-            raise HTTPException(status_code=500, detail=str(e)) 
+            raise HTTPException(status_code=500, detail=str(e))

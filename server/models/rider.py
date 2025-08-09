@@ -12,12 +12,6 @@ class Rider(Document):
     """
     This is the rider model.
     """
-    # id: Optional[PydanticObjectId] = Field(default_factory=PydanticObjectId, alias="_id")
-
-    # class Config:
-    #     validate_by_name = True
-    #     validate_by_alias = True
-
     name: str = Field(..., description="The name of the rider")
     age: int = Field(..., description="The age of the rider")
     bag_volume: float = Field(..., description="The bag volume of the rider")

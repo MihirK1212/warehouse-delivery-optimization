@@ -1,11 +1,11 @@
-from fastapi import APIRouter
+from fastapi import APIRouter, HTTPException    
 from typing import List, Any, Literal
 from beanie import PydanticObjectId
-from fastapi import Path
 
 from ..services.delivery import DeliveryService
 from ..models.delivery import DeliveryTask
 from ..dtos import CreateItemAndDeliveryTaskDTO, DeliveryTaskDTO, UpdateDeliveryTaskStatusDTO
+from ..enums import DeliveryStatus
 
 
 router = APIRouter(prefix="/delivery", tags=["delivery"])
@@ -19,6 +19,10 @@ async def get_delivery_task(delivery_task_id: PydanticObjectId):
 @router.get("/", response_model=List[DeliveryTaskDTO])
 async def get_delivery_tasks():
     return await DeliveryService.get_delivery_tasks()
+
+@router.get("/rider/{rider_id}", response_model=List[DeliveryTaskDTO])
+async def get_delivery_tasks_by_rider(rider_id: PydanticObjectId):
+    return await DeliveryService.get_delivery_tasks_by_rider(rider_id)
 
 
 @router.get("/undispatched", response_model=List[DeliveryTaskDTO])
@@ -41,10 +45,17 @@ async def update_delivery_task(
 @router.patch("/{delivery_task_id}/status")
 async def update_delivery_task_status(
     delivery_task_id: PydanticObjectId,
-    update_delivery_task_status: UpdateDeliveryTaskStatusDTO,
+    status_name_payload: UpdateDeliveryTaskStatusDTO,
 ):
+    try:
+        status = next(
+            s for s in DeliveryStatus if s.name == status_name_payload.status_name
+        )
+    except StopIteration:
+        raise HTTPException(status_code=400, detail="Invalid status name")
+
     return await DeliveryService.update_delivery_task_status(
-        delivery_task_id, update_delivery_task_status.status
+        delivery_task_id, status
     )
 
 

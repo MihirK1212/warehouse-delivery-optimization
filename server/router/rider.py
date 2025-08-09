@@ -4,14 +4,15 @@ from beanie import PydanticObjectId
 
 from ..services.rider import RiderService
 from ..models.rider import Rider
+from ..dtos import RiderDTO
 
 router = APIRouter(prefix="/rider", tags=["rider"])
 
-@router.get("/{rider_id}")
+@router.get("/{rider_id}", response_model=RiderDTO)
 async def get_rider(rider_id: PydanticObjectId):
     return await RiderService.get_rider(rider_id)
 
-@router.get("/")
+@router.get("/", response_model=List[RiderDTO])
 async def get_riders():
     return await RiderService.get_riders()
 

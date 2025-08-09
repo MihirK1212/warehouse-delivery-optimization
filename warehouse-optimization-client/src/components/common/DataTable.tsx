@@ -1,16 +1,9 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import { Column } from "@/types/excel";
 
-interface Column<T> {
-	key: keyof T;
-	header: string;
-	render?: (value: T[keyof T], row: T) => React.ReactNode;
-	sortable?: boolean;
-	width?: string;
-}
-
-interface DataTableProps<T> {
+export interface DataTableProps<T> {
 	data: T[];
 	columns: Column<T>[];
 	onRowSelect?: (selectedRows: T[]) => void;

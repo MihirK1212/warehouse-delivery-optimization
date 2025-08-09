@@ -1,11 +1,13 @@
 from pydantic import BaseModel
 from typing import Literal, List, Optional
 import datetime
+from beanie import PydanticObjectId
 
 from .models.item import Item
 from .models.delivery import DeliveryTask
 from .models.rider import Rider
 from .schemas import DeliveryInformation
+from .enums import DeliveryStatus
 
 class ItemAndDeliveryTaskDTO(BaseModel):
     item: Item
@@ -26,4 +28,7 @@ class DeliveryTaskDTO(DeliveryTask):
     rider: Optional[Rider]
 
 class UpdateDeliveryTaskStatusDTO(BaseModel):
-    status: Literal["undispatched", "dispatching", "dispatched", "in_progress", "completed", "cancelled"]
+    status_name: str
+
+class RiderDTO(Rider):
+    assigned_delivery_task_ids: List[PydanticObjectId]

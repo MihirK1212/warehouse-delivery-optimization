@@ -4,20 +4,20 @@ from beanie import PydanticObjectId, WriteRules
 from ..models.delivery import DeliveryTask, Item
 from ..models.rider import Rider
 from ..schemas import DeliveryInformation
+from ..dtos import DeliveryTaskDTO
+from ..enums import DeliveryStatus
 
 
 async def get_delivery_task(
     delivery_task_id: PydanticObjectId,
-) -> DeliveryTask:
+) -> DeliveryTaskDTO:
     """
     This is the function to get a delivery by its id.
     """
-    return await _populate_delivery_task_links(
-        await DeliveryTask.get(delivery_task_id)
-    )
+    return await _populate_delivery_task_links(await DeliveryTask.get(delivery_task_id))
 
 
-async def get_delivery_tasks() -> List[DeliveryTask]:
+async def get_delivery_tasks() -> List[DeliveryTaskDTO]:
     """
     This is the function to get all deliveries.
     """
@@ -67,12 +67,27 @@ async def create_item_and_delivery_task(
     This is the function to create an item and a delivery task.
     """
     delivery_task = DeliveryTask(
-        items=[item], delivery_information=delivery_information, status="undispatched"
+        items=[item],
+        delivery_information=delivery_information,
+        status=DeliveryStatus.UNDISPATCHED.name,
     )
     return await delivery_task.save(link_rule=WriteRules.WRITE)
 
+async def update_delivery_task_status(
+    delivery_task_id: PydanticObjectId, status: DeliveryStatus
+) -> DeliveryTask:
+    """
+    This is the function to update the status of a delivery task.
+    """
+    delivery_task = await DeliveryTask.get(delivery_task_id)
+    if delivery_task:
+        delivery_task.status = status.name
+        await delivery_task.save()
+    else:
+        raise HTTPException(status_code=404, detail="Delivery task not found")
 
-async def _populate_delivery_task_links(delivery_task: DeliveryTask) -> DeliveryTask:
+
+async def _populate_delivery_task_links(delivery_task: DeliveryTask) -> DeliveryTaskDTO:
     """
     This is the function to populate the delivery task links.
     """
@@ -82,19 +97,7 @@ async def _populate_delivery_task_links(delivery_task: DeliveryTask) -> Delivery
     delivery_task.rider = (
         await Rider.get(delivery_task.rider.ref.id) if delivery_task.rider else None
     )
-    delivery_task.items = [
-        await Item.get(item.ref.id) for item in delivery_task.items
-    ]
+    delivery_task.items = [await Item.get(item.ref.id) for item in delivery_task.items]
 
     return delivery_task
 
-async def update_delivery_task_status(delivery_task_id: PydanticObjectId, status: Literal["undispatched", "dispatching", "dispatched", "completed", "cancelled"]) -> DeliveryTask:
-    """
-    This is the function to update the status of a delivery task.
-    """
-    delivery_task = await DeliveryTask.get(delivery_task_id)
-    if delivery_task:
-        delivery_task.status = status
-        await delivery_task.save()
-    else:
-        raise HTTPException(status_code=404, detail="Delivery task not found")

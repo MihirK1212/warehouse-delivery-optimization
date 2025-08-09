@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import DataTable from '@/components/ui/DataTable';
-import Modal from '@/components/ui/Modal';
-import Alert from '@/components/ui/Alert';
-import LoadingSpinner from '@/components/ui/LoadingSpinner';
+import DataTable from '@/components/common/DataTable';
+import Modal from '@/components/common/Modal';
+import Alert from '@/components/common/Alert';
+import LoadingSpinner from '@/components/common/LoadingSpinner';
 import { useGetItemsQuery, useScanItemMutation } from '@/store/api/item';
 import { ScanFormData } from '@/types/forms';
 import { Item } from '@/types/item/type';

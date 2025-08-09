@@ -1,12 +1,13 @@
 import { Item } from "../item/type";
 import { DeliveryInformation, RouteSegment } from "../common/type";
 import { Rider } from "../rider/type";
+import { DeliveryStatus } from "../deliveryStatus";
 
 export type DeliveryTask  = {
     id: string;
     items: Item[],
     deliveryInformation: DeliveryInformation,
     rider?: Rider,
-    status: "undispatched" | "dispatched" | "in_progress" | "completed" | "cancelled",
+    status: DeliveryStatus,
     deliveryRoute: RouteSegment[],
 }

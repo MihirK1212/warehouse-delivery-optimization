@@ -4,19 +4,13 @@ from beanie import Document, Link, PydanticObjectId
 from ..schemas import RouteSegment, DeliveryInformation
 from .rider import Rider
 from .item import Item
+from ..enums import DeliveryStatus
 
 
 class DeliveryTask(Document):
     """
     This is the delivery task model.
     """
-
-    # id: Optional[PydanticObjectId] = Field(default_factory=PydanticObjectId, alias="_id")
-
-    # class Config:
-    #     validate_by_name = True
-    #     validate_by_alias = True
-
     items: List[Link[Item]] = Field(..., description="The items to be delivered")
 
     delivery_information: DeliveryInformation = Field(
@@ -28,13 +22,13 @@ class DeliveryTask(Document):
     )
 
     status: Literal[
-        "undispatched",
-        "dispatching",
-        "dispatched",
-        "in_progress",
-        "completed",
-        "cancelled",
-    ] = Field("undispatched", description="The status of the delivery task")
+        DeliveryStatus.UNDISPATCHED.name,
+        DeliveryStatus.DISPATCHING.name,
+        DeliveryStatus.DISPATCHED.name,
+        DeliveryStatus.IN_PROGRESS.name,
+        DeliveryStatus.COMPLETED.name,
+        DeliveryStatus.CANCELLED.name,
+    ] = Field(DeliveryStatus.UNDISPATCHED.name, description="The status of the delivery task")
 
     delivery_route: Optional[List[RouteSegment]] = Field(
         [], description="The route of the delivery"

@@ -8,12 +8,7 @@ export interface DeliveryTaskDTO {
 	items: ItemDTO[];
 	delivery_information: DeliveryInformationDTO;
 	rider?: RiderDTO;
-	status:
-		| "undispatched"
-		| "dispatched"
-		| "in_progress"
-		| "completed"
-		| "cancelled";
+	status: string;
 	delivery_route: RouteSegmentDTO[];
 }
 

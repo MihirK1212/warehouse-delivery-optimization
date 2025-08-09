@@ -18,6 +18,7 @@ const riderAPI = api.injectEndpoints({
                     age: rider.age,
                     bagVolume: rider.bag_volume,
                     phoneNumber: rider.phone_number,
+                    assignedDeliveryTaskIds: rider.assigned_delivery_task_ids,
                 }));
             },
 		}),
@@ -35,6 +36,7 @@ const riderAPI = api.injectEndpoints({
                     age: response.age,
                     bagVolume: response.bag_volume,
                     phoneNumber: response.phone_number,
+                    assignedDeliveryTaskIds: response.assigned_delivery_task_ids,
                 };
             },
 		}),
