@@ -29,7 +29,3 @@ class DeliveryTask(Document):
         DeliveryStatus.COMPLETED.name,
         DeliveryStatus.CANCELLED.name,
     ] = Field(DeliveryStatus.UNDISPATCHED.name, description="The status of the delivery task")
-
-    delivery_route: Optional[List[RouteSegment]] = Field(
-        [], description="The route of the delivery"
-    )

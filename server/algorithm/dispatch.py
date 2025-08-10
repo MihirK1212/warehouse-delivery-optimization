@@ -9,7 +9,7 @@ from .map import distance as map_distance_service
 from ..schemas import Coordinate
 from ..constants import WAREHOUSE_LOCATION
 from ..models.item import Item
-from . import clock as clock_service
+from ..clock import WarehouseMockClock
 
 
 class DispatchAlgorithm:
@@ -51,7 +51,7 @@ class DispatchAlgorithm:
             p.stdin.write(str(int(item.tool_scan_information.volume)) + "\n")
             f.write(str(int(item.tool_scan_information.volume)) + "\n")
 
-        current_time = clock_service.get_day_start_timestamp()
+        current_time = WarehouseMockClock().get_day_start_timestamp()
 
         for delivery_task in delivery_tasks:
             expected_delivery_time = (
@@ -164,7 +164,7 @@ class DispatchAlgorithm:
             ), "Delivery task's expected delivery time must be provided"
             assert (
                 delivery_task.delivery_information.expected_delivery_time
-                > clock_service.get_day_start_timestamp()
+                > WarehouseMockClock().get_day_start_timestamp()
             ), "Delivery task's expected delivery time must be in the future"
 
             item = Item(**delivery_task.items[0].model_dump())

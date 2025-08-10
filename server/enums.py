@@ -18,3 +18,10 @@ class DeliveryStatus(Enum):
     @property
     def rank(self):
         return self.value["rank"]
+
+    @classmethod
+    def get_status_by_name(cls, name: str):
+        status = next(status for status in cls if status.name == name)
+        if status is None:
+            raise StopIteration("Invalid status name")
+        return status

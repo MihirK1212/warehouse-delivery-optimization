@@ -10,6 +10,7 @@ export const api = createApi({
     tagTypes: [
         'Item',
         'DeliveryTask', 
-        'Rider'
+        'Rider',
+        'DeliveryTasksBatch'
     ]
 });

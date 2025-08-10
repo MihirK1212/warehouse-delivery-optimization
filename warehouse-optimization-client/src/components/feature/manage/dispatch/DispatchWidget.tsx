@@ -4,7 +4,7 @@ import DataTable from "@/components/common/DataTable";
 import LoadingSpinner from "@/components/common/LoadingSpinner";
 import { DeliveryTask } from "@/types/delivery/type";
 import { Rider } from "@/types/rider/type";
-import { useDispatchDeliveryTasksMutation } from "@/store/api/delivery";
+import { useDispatchDeliveryTasksMutation } from "@/store/api/deliveryBatch";
 import type { Item } from "@/types/item/type";
 
 export default function DispatchModal({

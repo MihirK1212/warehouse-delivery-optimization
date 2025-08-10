@@ -1,8 +1,8 @@
+import { itemAdapter } from "@/types/item/adapter";
 import { api } from "./base";
 import { ItemDTO, ScanItemDTO } from "@/types/item/dto";
 import { Item } from "@/types/item/type";
 import _ from "lodash";
-import moment from "moment";
 
 const itemAPI = api.injectEndpoints({
 	endpoints: (build) => ({
@@ -13,14 +13,7 @@ const itemAPI = api.injectEndpoints({
 			}),
 			providesTags: ["Item"],
             transformResponse: (response: ItemDTO[]): Item[] => {
-                return _.map(response, (item) => ({
-                    id: item._id || "",
-                    name: item.name,
-                    description: item.description,
-                    toolScanInformation: item.tool_scan_information,
-                    itemLocation: item.item_location,
-                    timestampCreated: moment(item.timestamp_created),
-                }));
+                return _.map(response, itemAdapter);
             },
 		}),
 
@@ -31,14 +24,7 @@ const itemAPI = api.injectEndpoints({
 			}),
 			providesTags: (result, error, id) => [{ type: "Item", id }],
             transformResponse: (response: ItemDTO): Item => {
-                return {
-                    id: response._id || "",
-                    name: response.name,
-                    description: response.description,
-                    toolScanInformation: response.tool_scan_information,
-                    itemLocation: response.item_location,
-                    timestampCreated: moment(response.timestamp_created),
-                };
+                return itemAdapter(response);
             },
 		}),
 
@@ -54,6 +40,8 @@ const itemAPI = api.injectEndpoints({
 			invalidatesTags: (result, error, { itemId }) => [
 				{ type: "Item", id: itemId },
 				"Item",
+				"DeliveryTask",
+				"DeliveryTasksBatch",
 			],
 		}),
 

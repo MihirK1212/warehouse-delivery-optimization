@@ -5,6 +5,7 @@ from beanie import PydanticObjectId
 from ..crud import rider as rider_crud
 from ..models.rider import Rider
 from ..dtos import RiderDTO
+from ..crud import delivery as delivery_crud
 
 
 class RiderService:
@@ -15,10 +16,15 @@ class RiderService:
         """
         try:
             rider = await rider_crud.get_rider(rider_id)
+            delivery_tasks = await delivery_crud.get_delivery_tasks()
             if rider:
                 return RiderDTO(
                     **rider.model_dump(),
-                    assigned_delivery_task_ids=[delivery_task.ref.id for delivery_task in rider.delivery_tasks]
+                    assigned_delivery_task_ids=[
+                        delivery_task.id
+                        for delivery_task in delivery_tasks
+                        if getattr(delivery_task.rider, "id", None) == rider_id
+                    ]
                 )
         except Exception as e:
             raise HTTPException(status_code=500, detail=str(e))
@@ -30,11 +36,16 @@ class RiderService:
         """
         try:
             riders = await rider_crud.get_riders()
+            delivery_tasks = await delivery_crud.get_delivery_tasks()
             if riders:
                 return [
                     RiderDTO(
                         **rider.model_dump(),
-                        assigned_delivery_task_ids=[delivery_task.ref.id for delivery_task in rider.delivery_tasks]
+                        assigned_delivery_task_ids=[
+                            delivery_task.id
+                            for delivery_task in delivery_tasks
+                            if getattr(delivery_task.rider, "id", None) == rider.id
+                        ]
                     )
                     for rider in riders
                 ]

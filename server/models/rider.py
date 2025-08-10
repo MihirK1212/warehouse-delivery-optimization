@@ -16,7 +16,3 @@ class Rider(Document):
     age: int = Field(..., description="The age of the rider")
     bag_volume: float = Field(..., description="The bag volume of the rider")
     phone_number: str = Field(..., description="The phone number of the rider")
-
-    delivery_tasks: List[Link["DeliveryTask"]] = Field(
-        [], description="The delivery tasks of the rider"
-    )

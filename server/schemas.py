@@ -12,7 +12,7 @@ class ToolScanInformation(BaseModel):
     weight: float = Field(..., description="The weight of the item")
 
     timestamp: datetime.datetime = Field(
-        datetime.datetime.now(), description="The timestamp of the item"
+        datetime.datetime.now(datetime.timezone.utc), description="The timestamp of the item"
     )
 
 

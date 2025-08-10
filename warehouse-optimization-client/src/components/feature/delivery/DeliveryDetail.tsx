@@ -1,7 +1,7 @@
 "use client";
 
 import { DeliveryTask } from "@/types/delivery/type";
-import { useUpdateDeliveryTaskStatusMutation } from "@/store/api/delivery";
+import { useUpdateDeliveryTaskStatusMutation } from "@/store/api/deliveryBatch";
 import moment from "moment";
 import { DeliveryStatus } from "@/types/deliveryStatus";
 
@@ -26,16 +26,22 @@ export default function DeliveryDetail({
 		if (nextStatus) {
 			try {
 				await updateStatus({
-					id: delivery.id,
+					deliveryTaskId: delivery.id,
 					status: nextStatus,
 				}).unwrap();
 			} catch (error) {
 				console.error("Failed to update status:", error);
+			} finally {
+				if(nextStatus === DeliveryStatus.COMPLETED) {
+					onClose();
+					window.location.reload();
+				}
 			}
 		}
 	};
 
 	if (!delivery) {
+		onClose();
 		return <div>Delivery not found</div>;
 	}
 

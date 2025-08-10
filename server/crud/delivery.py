@@ -99,5 +99,5 @@ async def _populate_delivery_task_links(delivery_task: DeliveryTask) -> Delivery
     )
     delivery_task.items = [await Item.get(item.ref.id) for item in delivery_task.items]
 
-    return delivery_task
+    return DeliveryTaskDTO(**delivery_task.model_dump())
 

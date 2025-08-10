@@ -8,6 +8,7 @@ from .models.delivery import DeliveryTask
 from .models.rider import Rider
 from .schemas import DeliveryInformation
 from .enums import DeliveryStatus
+from .models.delivery_batch import DeliveryTaskRef, DeliveryTasksBatch
 
 class ItemAndDeliveryTaskDTO(BaseModel):
     item: Item
@@ -32,3 +33,12 @@ class UpdateDeliveryTaskStatusDTO(BaseModel):
 
 class RiderDTO(Rider):
     assigned_delivery_task_ids: List[PydanticObjectId]
+
+
+class DeliveryTaskRefDTO(DeliveryTaskRef):
+    delivery_task: DeliveryTaskDTO
+    order_key: float
+
+class DeliveryTasksBatchDTO(DeliveryTasksBatch):
+    rider: Rider
+    tasks: List[DeliveryTaskRefDTO]

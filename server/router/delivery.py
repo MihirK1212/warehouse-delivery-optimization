@@ -1,5 +1,5 @@
 from fastapi import APIRouter, HTTPException    
-from typing import List, Any, Literal
+from typing import List
 from beanie import PydanticObjectId
 
 from ..services.delivery import DeliveryService
@@ -40,38 +40,6 @@ async def update_delivery_task(
     delivery_task_id: PydanticObjectId, delivery_task: DeliveryTask
 ):
     return await DeliveryService.update_delivery_task(delivery_task_id, delivery_task)
-
-
-@router.patch("/{delivery_task_id}/status")
-async def update_delivery_task_status(
-    delivery_task_id: PydanticObjectId,
-    status_name_payload: UpdateDeliveryTaskStatusDTO,
-):
-    try:
-        status = next(
-            s for s in DeliveryStatus if s.name == status_name_payload.status_name
-        )
-    except StopIteration:
-        raise HTTPException(status_code=400, detail="Invalid status name")
-
-    return await DeliveryService.update_delivery_task_status(
-        delivery_task_id, status
-    )
-
-
-@router.post("/dispatch")
-async def dispatch_delivery_tasks(
-    delivery_task_ids: List[PydanticObjectId], rider_ids: List[PydanticObjectId]
-) -> dict[str, Any]:
-    return await DeliveryService.dispatch_delivery_tasks(delivery_task_ids, rider_ids)
-
-
-@router.post("/pickup")
-async def add_dynamic_pickup_delivery_tasks(
-    payload: List[CreateItemAndDeliveryTaskDTO],
-):
-    return await DeliveryService.add_dynamic_pickup_delivery_tasks(payload)
-
 
 @router.post("/item_and_task")
 async def add_item_with_delivery_task(payload: CreateItemAndDeliveryTaskDTO):

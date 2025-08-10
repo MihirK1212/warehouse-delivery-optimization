@@ -4,7 +4,7 @@ from contextlib import asynccontextmanager
 
 from .database import init_db
 from .settings import settings
-from .router import item, rider, delivery
+from .router import item, rider, delivery, delivery_batch
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
@@ -42,6 +42,7 @@ app.add_middleware(
 app.include_router(item.router)
 app.include_router(rider.router)
 app.include_router(delivery.router) 
+app.include_router(delivery_batch.router)   
 
 @app.get("/")
 async def read_root():

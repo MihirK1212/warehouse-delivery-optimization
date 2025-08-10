@@ -7,12 +7,14 @@ interface DeliveryCardProps {
 	delivery: DeliveryTask;
 	onSelectDeliveryId: (deliveryId: string) => void;
 	isSelected: boolean;
+	isDisabled: boolean;
 }
 
 export default function DeliveryCard({
 	delivery,
 	onSelectDeliveryId,
 	isSelected,
+	isDisabled,
 }: DeliveryCardProps) {
 	const totalVolume = delivery.items.reduce(
 		(sum, item) => sum + (item.toolScanInformation?.volume || 0),
@@ -25,8 +27,8 @@ export default function DeliveryCard({
 				isSelected
 					? "border-blue-500 ring-2 ring-blue-200"
 					: "border-gray-200"
-			}`}
-			onClick={() => onSelectDeliveryId(delivery.id)}
+			} ${isDisabled ? "opacity-50 cursor-not-allowed" : ""}`}
+			onClick={() => !isDisabled && onSelectDeliveryId(delivery.id)}
 		>
 			{/* Header */}
 			<div className="flex justify-between items-start mb-3">

@@ -1,15 +1,15 @@
 "use client";
 
-import { useGetDeliverTasksForRiderQuery } from "@/store/api/delivery";
 import { useGetRiderQuery } from "@/store/api/rider";
-import { use, useEffect, useState } from "react";
+import { use, useState } from "react";
 import { redirect } from "next/navigation";
-import DeliverySidebar from "../../../components/feature/delivery/DeliverySidebar";
 import DeliveryDetail from "../../../components/feature/delivery/DeliveryDetail";
 import DeliveryCard from "../../../components/feature/delivery/DeliveryCard";
 import RiderDeliveriesStatInfo from "@/components/feature/rider/RiderDeliveriesStatInfo";
 import RiderProfileHeader from "@/components/feature/rider/RiderProfileHeader";
 import _ from "lodash";
+import { useGetDeliveryTasksBatchForRiderQuery } from "@/store/api/deliveryBatch";
+import { DeliveryStatus } from "@/types/deliveryStatus";
 
 export default function RiderPage({
 	params,
@@ -18,37 +18,36 @@ export default function RiderPage({
 }) {
 	const { riderId } = use(params);
 
+	const { data: deliveryTasksBatch, isLoading: isLoadingDeliveryTasksBatch } =
+		useGetDeliveryTasksBatchForRiderQuery(riderId);
 	const { data: rider, isLoading: isLoadingRider } =
-		useGetRiderQuery(riderId);
-	const { data: allTasks = [], isLoading: isLoadingTasks } =
-		useGetDeliverTasksForRiderQuery(riderId);
+		useGetRiderQuery(riderId);	
+		
+	const rankDeliveryTasks = _.map(_.orderBy(deliveryTasksBatch?.tasks, 'orderKey'), 'deliveryTask');
+	const currentTaskIndex = deliveryTasksBatch?.currentTaskIndex || 0;
 
-	const [selectedDeliveryId, setSelectedDeliveryId] = useState<string | null>(
-		null
-	);
-	const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(false);
+	// some validation checks for the delivery tasks batch
+	for(let i = 0; i < rankDeliveryTasks.length; i++) {
+		if(i<currentTaskIndex && rankDeliveryTasks[i].status != DeliveryStatus.COMPLETED) {
+			window.alert('You have not completed the previous delivery tasks');
+			return;
+		}
+		if(i==currentTaskIndex && !_.includes([DeliveryStatus.DISPATCHED, DeliveryStatus.IN_PROGRESS], rankDeliveryTasks[i].status)) {
+			window.alert('You have not completed the current delivery task');
+			return;
+		}
+		if(i>currentTaskIndex && rankDeliveryTasks[i].status != DeliveryStatus.DISPATCHED) {
+			window.alert('You have not completed the upcoming delivery tasks');
+			return;
+		}
+	}	
 
-	useEffect(() => {
-		setSelectedDeliveryId((current) =>
-			current ? _.first(allTasks)?.id || null : null
-		);
-	}, [allTasks.length]);
-
-	// Filter tasks that are assigned to the logged-in rider only
-	const assignedTasks = allTasks.filter(
-		(task) => task.rider && task.rider.id === riderId
-	);
-
-	const handleSelectDeliveryId = (deliveryId: string) => {
-		setSelectedDeliveryId(deliveryId);
-	};
+	const currentDeliveryTask = _.get(rankDeliveryTasks, currentTaskIndex)
+	
+	const [isDetailViewOpen, setIsDetailViewOpen] = useState(false);
 
 	const handleCloseDetail = () => {
-		setSelectedDeliveryId(null);
-	};
-
-	const toggleSidebar = () => {
-		setIsSidebarCollapsed(!isSidebarCollapsed);
+		setIsDetailViewOpen(false);
 	};
 
 	const handleLogout = () => {
@@ -56,7 +55,7 @@ export default function RiderPage({
 		redirect("/rider");
 	};
 
-	if (isLoadingTasks || isLoadingRider) {
+	if (isLoadingDeliveryTasksBatch) {
 		return (
 			<div className="min-h-screen bg-gray-50 flex items-center justify-center">
 				<div className="text-center">
@@ -69,22 +68,12 @@ export default function RiderPage({
 		);
 	}
 
-	if (selectedDeliveryId) {
+	if (isDetailViewOpen) {
 		return (
 			<div className="min-h-screen bg-gray-50 flex">
-				<DeliverySidebar
-					deliveries={assignedTasks}
-					selectedDeliveryId={selectedDeliveryId}
-					onSelectDeliveryId={handleSelectDeliveryId}
-					isCollapsed={isSidebarCollapsed}
-					onToggleCollapse={toggleSidebar}
-				/>
 				<div className="flex-1 flex flex-col">
 					<DeliveryDetail
-						delivery={
-							_.find(assignedTasks, { id: selectedDeliveryId }) ||
-							_.first(assignedTasks)
-						}
+						delivery={currentDeliveryTask}
 						onClose={handleCloseDetail}
 					/>
 				</div>
@@ -93,6 +82,9 @@ export default function RiderPage({
 	}
 
 	if (!rider) {
+		if (!isLoadingRider) {
+			handleLogout();
+		}
 		return <div>Rider not found</div>;
 	}
 
@@ -102,13 +94,13 @@ export default function RiderPage({
 
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 				<div className="space-y-8">
-					<RiderDeliveriesStatInfo tasks={assignedTasks} />
+					<RiderDeliveriesStatInfo tasks={rankDeliveryTasks} />
 
 					{/* Interactive Deliveries Grid */}
 					<div>
 						<div className="flex justify-between items-center mb-6">
 							<h3 className="text-lg font-medium text-gray-900">
-								Your Assigned Deliveries
+								Your Assigned Deliveries (in order)
 							</h3>
 							<p className="text-sm text-gray-500">
 								Click on any delivery to view detailed
@@ -116,7 +108,7 @@ export default function RiderPage({
 							</p>
 						</div>
 
-						{assignedTasks.length === 0 ? (
+						{_.filter(rankDeliveryTasks, (delivery) => delivery.status != DeliveryStatus.COMPLETED).length === 0 ? (
 							<div className="bg-white rounded-lg shadow p-12 text-center">
 								<svg
 									className="w-16 h-16 text-gray-300 mx-auto mb-4"
@@ -142,16 +134,13 @@ export default function RiderPage({
 							</div>
 						) : (
 							<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-								{assignedTasks.map((delivery) => (
+								{_.map(_.filter(rankDeliveryTasks, (delivery) => delivery.status != DeliveryStatus.COMPLETED), (delivery) => (
 									<DeliveryCard
 										key={delivery.id}
 										delivery={delivery}
-										onSelectDeliveryId={
-											handleSelectDeliveryId
-										}
-										isSelected={
-											selectedDeliveryId === delivery.id
-										}
+										onSelectDeliveryId={() => setIsDetailViewOpen(true)}
+										isSelected={isDetailViewOpen}
+										isDisabled={delivery.id !== currentDeliveryTask?.id}
 									/>
 								))}
 							</div>

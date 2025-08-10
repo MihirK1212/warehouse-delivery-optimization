@@ -1,3 +1,4 @@
+import { riderAdapter } from "@/types/rider/adapter";
 import { api } from "./base";
 import { CreateRiderDTO, RiderDTO } from "@/types/rider/dto";
 import { Rider } from "@/types/rider/type";
@@ -12,14 +13,7 @@ const riderAPI = api.injectEndpoints({
 			}),
 			providesTags: ["Rider"],
             transformResponse: (response: RiderDTO[]): Rider[] => {
-                return _.map(response, (rider) => ({
-                    id: rider._id || "",
-                    name: rider.name,
-                    age: rider.age,
-                    bagVolume: rider.bag_volume,
-                    phoneNumber: rider.phone_number,
-                    assignedDeliveryTaskIds: rider.assigned_delivery_task_ids,
-                }));
+                return _.map(response, riderAdapter);
             },
 		}),
 
@@ -30,14 +24,7 @@ const riderAPI = api.injectEndpoints({
 			}),
 			providesTags: (result, error, id) => [{ type: "Rider", id }],
             transformResponse: (response: RiderDTO): Rider => {
-                return {
-                    id: response._id || "",
-                    name: response.name,
-                    age: response.age,
-                    bagVolume: response.bag_volume,
-                    phoneNumber: response.phone_number,
-                    assignedDeliveryTaskIds: response.assigned_delivery_task_ids,
-                };
+                return riderAdapter(response);
             },
 		}),
 
@@ -58,6 +45,8 @@ const riderAPI = api.injectEndpoints({
 			invalidatesTags: (result, error, id) => [
 				{ type: "Rider", id },
 				"Rider",
+				"DeliveryTasksBatch",
+				"DeliveryTask",
 			],
 		}),
 	}),

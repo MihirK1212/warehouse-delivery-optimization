@@ -2,6 +2,7 @@ from .settings import settings
 from .models.item import Item
 from .models.rider import Rider
 from .models.delivery import DeliveryTask
+from .models.delivery_batch import DeliveryTasksBatch
 from beanie import init_beanie
 import motor.motor_asyncio
 
@@ -11,5 +12,5 @@ async def init_db():
     database = client[settings.MONGO_NAME]
 
     await init_beanie(
-        database=database, document_models=[Item, Rider, DeliveryTask]
+        database=database, document_models=[Item, Rider, DeliveryTask, DeliveryTasksBatch]
     )

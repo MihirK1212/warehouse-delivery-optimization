@@ -22,5 +22,5 @@ class Item(Document):
     )
 
     timestamp_created: datetime.datetime = Field(
-        datetime.datetime.now(), description="The timestamp of the item creation"
+        datetime.datetime.now(datetime.timezone.utc), description="The timestamp of the item creation"
     )

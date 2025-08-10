@@ -66,15 +66,14 @@ export default function ScanPage() {
         setSelectedItem(null);
         setScanData({ weight: 0, volume: 0 });
         setScanStatus(null);
-      }, 1500);
+        setIsScanning(false);
+      }, 500);
 
     } catch (error: any) {
       setScanStatus({
         type: 'error',
         message: error?.data?.detail || 'Failed to scan item. Please try again.'
       });
-    } finally {
-      setIsScanning(false);
     }
   };
 
