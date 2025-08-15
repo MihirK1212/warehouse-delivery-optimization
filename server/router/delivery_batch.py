@@ -3,7 +3,12 @@ from typing import List, Any
 from beanie import PydanticObjectId
 
 from ..services.delivery_batch import DeliveryBatchService
-from ..dtos import CreateItemAndDeliveryTaskDTO, DeliveryTasksBatchDTO, UpdateDeliveryTaskStatusDTO
+from ..dtos import (
+    CreateItemAndDeliveryTaskDTO,
+    DeliveryTasksBatchDTO,
+    UpdateDeliveryTaskStatusDTO,
+    PickupDeliveryBatchAssignmentDTO,
+)
 from ..models.delivery import DeliveryStatus
 
 
@@ -19,11 +24,14 @@ async def dispatch_delivery_tasks(
     )
 
 
-@router.post("/pickup")
-async def add_dynamic_pickup_delivery_tasks(
-    payload: List[CreateItemAndDeliveryTaskDTO],
+@router.post("/pickup", response_model=List[PickupDeliveryBatchAssignmentDTO])
+async def dispatch_dynamic_pickup_delivery_tasks(
+    delivery_task_ids: List[PydanticObjectId]
 ):
-    return await DeliveryBatchService.add_dynamic_pickup_delivery_tasks(payload)
+    print("delivery_task_ids", delivery_task_ids)
+    return await DeliveryBatchService.dispatch_dynamic_pickup_delivery_tasks(
+        delivery_task_ids
+    )
 
 
 @router.get("/rider/{rider_id}", response_model=DeliveryTasksBatchDTO)

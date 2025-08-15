@@ -19,7 +19,7 @@ async def create_delivery_tasks_batch(
 
 async def get_delivery_tasks_batch(
     delivery_tasks_batch_id: PydanticObjectId,
-) -> DeliveryTasksBatch:
+) -> DeliveryTasksBatchDTO:
     """
     This is the function to get a delivery tasks batch.
     """
@@ -39,6 +39,7 @@ async def get_delivery_tasks_batches() -> List[DeliveryTasksBatchDTO]:
     delivery_tasks_batches_dto = [
         await _populate_delivery_tasks_batch(delivery_tasks_batch)
         for delivery_tasks_batch in delivery_tasks_batches
+        if delivery_tasks_batch.is_current_day_tasks_batch()
     ]
     for delivery_tasks_batch_dto in delivery_tasks_batches_dto:
         _validate_deliery_tasks_batch(delivery_tasks_batch_dto)
@@ -69,23 +70,28 @@ async def _populate_delivery_tasks_batch(
         delivery_tasks_batch.rider = await rider_crud.get_rider(
             delivery_tasks_batch.rider.ref.id
         )
-    delivery_tasks_batch.tasks = sorted([
-        DeliveryTaskRefDTO(
-            delivery_task=await delivery_crud.get_delivery_task(
-                task.delivery_task.ref.id
-            ),
-            order_key=task.order_key,
-        )
-        for task in delivery_tasks_batch.tasks
-    ], key=lambda x: x.order_key)
-    return delivery_tasks_batch
+    delivery_tasks_batch.tasks = sorted(
+        [
+            DeliveryTaskRefDTO(
+                delivery_task=await delivery_crud.get_delivery_task(
+                    task.delivery_task.ref.id
+                ),
+                order_key=task.order_key,
+            )
+            for task in delivery_tasks_batch.tasks
+        ],
+        key=lambda x: x.order_key,
+    )
+    return DeliveryTasksBatchDTO(**delivery_tasks_batch.model_dump())
 
 
 def _validate_deliery_tasks_batch(delivery_tasks_batch: DeliveryTasksBatchDTO) -> None:
     """
     This is the function to validate a delivery tasks batch.
     """
-    assert delivery_tasks_batch.current_task_index <= len(delivery_tasks_batch.tasks), "Current task index is out of range"
+    assert delivery_tasks_batch.current_task_index <= len(
+        delivery_tasks_batch.tasks
+    ), "Current task index is out of range"
 
     pivot_index = delivery_tasks_batch.current_task_index
 
@@ -104,3 +110,8 @@ def _validate_deliery_tasks_batch(delivery_tasks_batch: DeliveryTasksBatchDTO) -
             assert DeliveryStatus.get_status_by_name(task.delivery_task.status) in [
                 DeliveryStatus.DISPATCHED
             ], "Next task is not dispatched"
+
+    # each task should have unique order key
+    assert len(set([task.order_key for task in delivery_tasks_batch.tasks])) == len(
+        delivery_tasks_batch.tasks
+    ), "Tasks should have unique order key"

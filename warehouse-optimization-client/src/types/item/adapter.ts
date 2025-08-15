@@ -9,6 +9,6 @@ export const itemAdapter = (item: ItemDTO): Item => {
         description: item.description,
         toolScanInformation: item.tool_scan_information,
         itemLocation: item.item_location,
-        timestampCreated: moment(item.timestamp_created),
+        timestampCreated: moment.utc(item.timestamp_created),
     }
 }   

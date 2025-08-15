@@ -5,7 +5,12 @@ from beanie import PydanticObjectId
 import asyncio
 import datetime
 
-from ..dtos import CreateItemAndDeliveryTaskDTO, DeliveryTaskDTO, DeliveryTasksBatchDTO
+from ..dtos import (
+    CreateItemAndDeliveryTaskDTO,
+    DeliveryTaskDTO,
+    DeliveryTasksBatchDTO,
+    PickupDeliveryBatchAssignmentDTO,
+)
 from ..models.delivery import DeliveryTask, Rider
 from ..models.delivery_batch import DeliveryTaskRef, DeliveryTasksBatch
 from ..crud import delivery as delivery_crud
@@ -15,6 +20,7 @@ from ..algorithm.dispatch import DispatchAlgorithm
 from ..crud import rider as rider_crud
 from ..enums import DeliveryStatus
 from .delivery import DeliveryService
+from ..algorithm.dynamic_pickup import DynamicPickupAlgorithm
 
 
 class DeliveryBatchService:
@@ -46,6 +52,8 @@ class DeliveryBatchService:
             ]
         ), "All delivery tasks must be undispatched and not assigned to a rider and must be delivery"
 
+        assert len(rider_ids) == len(set(rider_ids)), "Rider ids must be unique"
+
         for delivery_task in delivery_tasks:
             await delivery_crud.update_delivery_task(
                 delivery_task.id, {DeliveryTask.status: DeliveryStatus.DISPATCHING.name}
@@ -75,7 +83,6 @@ class DeliveryBatchService:
             for rider_id, delivery_task_ids in rider_to_delivery_task_ids.items():
                 delivery_tasks_batch = DeliveryTasksBatch(
                     rider=rider_id,
-                    date=datetime.datetime.now(datetime.timezone.utc).date(),
                     tasks=[
                         DeliveryTaskRef(
                             delivery_task=delivery_task_id,
@@ -105,27 +112,148 @@ class DeliveryBatchService:
             raise e
 
     @classmethod
-    async def add_dynamic_pickup_delivery_tasks(
-        cls, payload: List[CreateItemAndDeliveryTaskDTO]
-    ) -> List[DeliveryTask]:
+    async def dispatch_dynamic_pickup_delivery_tasks(
+        cls, delivery_task_ids: List[PydanticObjectId]
+    ) -> List[PickupDeliveryBatchAssignmentDTO]:
         """
-        This method is used to add a dynamic pickup delivery.
+        This method is used to dispatch dynamic pickup delivery tasks.
         """
-        assert all(
-            item_and_delivery_task.delivery_information.delivery_type == "pickup"
-            for item_and_delivery_task in payload
-        )
 
-        delivery_tasks = []
-        for pickup_item_and_delivery_task in payload:
-            delivery_tasks.append(
-                await DeliveryService.create_item_and_delivery_task(
-                    pickup_item_and_delivery_task.item,
-                    pickup_item_and_delivery_task.delivery_information,
-                )
+        async def _dispatch_dynamic_pickup_delivery_task(
+            delivery_task_id: PydanticObjectId,
+        ):
+            pickup_delivery_task = await delivery_crud.get_delivery_task(
+                delivery_task_id
+            )
+            assert pickup_delivery_task.status == DeliveryStatus.UNDISPATCHED.name
+            assert pickup_delivery_task.delivery_information.delivery_type == "pickup"
+            assert pickup_delivery_task.rider is None
+
+            await delivery_crud.update_delivery_task(
+                pickup_delivery_task.id,
+                {DeliveryTask.status: DeliveryStatus.DISPATCHING.name},
             )
 
-        return delivery_tasks
+            try:
+                delivery_tasks_batches = (
+                    await delivery_batch_crud.get_delivery_tasks_batches()
+                )
+
+                pickup_delivery_batch_assignment = await asyncio.wait_for(
+                    asyncio.to_thread(
+                        DynamicPickupAlgorithm.add_pickup,
+                        pickup_delivery_task,
+                        delivery_tasks_batches,
+                    ),
+                    timeout=10,
+                )
+
+                await cls.add_delivery_task_to_delivery_tasks_batch(
+                    pickup_delivery_batch_assignment.assigned_delivery_tasks_batch_id,
+                    pickup_delivery_task.id,
+                    pickup_delivery_batch_assignment.after_task_index,
+                )
+
+                await delivery_crud.update_delivery_task(
+                    pickup_delivery_task.id,
+                    {
+                        DeliveryTask.status: DeliveryStatus.DISPATCHED.name,
+                    },
+                )
+
+            except Exception as e:
+                await delivery_crud.update_delivery_task(
+                    pickup_delivery_task.id,
+                    {
+                        DeliveryTask.status: DeliveryStatus.UNDISPATCHED.name,
+                    },
+                )
+                raise e
+
+            return pickup_delivery_batch_assignment
+
+        # pickup tasks must be assigned in the same order as they are dispatched
+        # To ensure the delivery tasks are dispatched sequentially (one after another),
+        # we process them in a for loop and await each one before moving to the next.
+        pickup_delivery_batch_assignments = []
+        for delivery_task_id in delivery_task_ids:
+            pickup_delivery_batch_assignment = (
+                await _dispatch_dynamic_pickup_delivery_task(delivery_task_id)
+            )
+            pickup_delivery_batch_assignments.append(pickup_delivery_batch_assignment)
+
+        return pickup_delivery_batch_assignments
+
+    @classmethod
+    async def add_delivery_task_to_delivery_tasks_batch(
+        cls,
+        delivery_tasks_batch_id: PydanticObjectId,
+        delivery_task_id: PydanticObjectId,
+        after_task_index: int,
+    ) -> None:
+        delivery_tasks_batch = await delivery_batch_crud.get_delivery_tasks_batch(
+            delivery_tasks_batch_id
+        )
+        tasks = sorted(delivery_tasks_batch.tasks, key=lambda x: x.order_key)
+
+        assert (
+            after_task_index >= 0
+        ), "After task index must be greater than or equal to 0"
+        assert after_task_index < len(
+            tasks
+        ), "After task index must be less than the number of tasks"
+
+        updated_tasks = tasks
+
+        if len(tasks) == 0:
+            updated_tasks = [
+                DeliveryTaskRef(delivery_task=delivery_task_id, order_key=0)
+            ]
+        else:
+            prev_task_order_key = tasks[after_task_index].order_key
+            next_task_order_key = (
+                (prev_task_order_key + 1)
+                if (after_task_index + 1) >= len(tasks)
+                else tasks[after_task_index + 1].order_key
+            )
+            updated_tasks = (
+                [
+                    DeliveryTaskRef(
+                        delivery_task=task.delivery_task.id,
+                        order_key=task.order_key,
+                    )
+                    for task in tasks[: after_task_index + 1]
+                ]
+                + [
+                    DeliveryTaskRef(
+                        delivery_task=delivery_task_id,
+                        order_key=((prev_task_order_key + next_task_order_key) / 2),
+                    )
+                ]
+                + [
+                    DeliveryTaskRef(
+                        delivery_task=task.delivery_task.id,
+                        order_key=task.order_key,
+                    )
+                    for task in tasks[after_task_index + 1 :]
+                ]
+            )
+
+        assert (
+            len(updated_tasks) == len(tasks) + 1
+        ), "Updated tasks must be of the same length as the original tasks"
+        assert set([task.delivery_task.ref.id for task in updated_tasks]) == set(
+            [task.delivery_task.id for task in tasks]
+        ) | {
+            delivery_task_id
+        }, "Updated tasks must contain the original tasks and the new task"
+
+        await delivery_batch_crud.update_delivery_tasks_batch(
+            delivery_tasks_batch_id,
+            {
+                DeliveryTasksBatch.tasks: updated_tasks,
+            },
+        )
 
     @classmethod
     async def get_delivery_tasks_batch_for_rider(

@@ -1,6 +1,23 @@
 import { ItemUploadFormData } from "@/types/forms";
 import { useCreateItemWithDeliveryTaskMutation } from "@/store/api/delivery";
 import ExcelDataUploadWidget from "@/components/common/ExcelDataUploadWidget";
+import moment from "moment";
+
+// TODO: This is a temporary fix to adjust the expected delivery date to today's date.
+// ideally this should be corrected while uploading the excel file
+const adjustEDDToTodayDate = (edd: moment.Moment): moment.Moment => {
+	const today = moment().utc();
+	const adjustedEDD = moment.utc({
+		year: today.year(),
+		month: today.month(),
+		date: today.date(),
+		hour: edd.hour(),
+		minute: edd.minute(),
+		second: edd.second(),
+		millisecond: edd.millisecond(),
+	});
+	return adjustedEDD;
+};
 
 export default function UploadInventoryWidget({
 	onSubmit,
@@ -19,7 +36,9 @@ export default function UploadInventoryWidget({
 						description: item.description,
 					},
 					delivery_information: {
-						expected_delivery_time: item.expected_delivery_time,
+						expected_delivery_time: adjustEDDToTodayDate(
+							moment.utc(item.expected_delivery_time)
+						).format("YYYY-MM-DDTHH:mm:ss.SSSZ"),
 						delivery_type: item.delivery_type,
 						awb_id: item.awb_id,
 						delivery_location: {
@@ -48,6 +67,8 @@ export default function UploadInventoryWidget({
 		"delivery_type",
 		"awb_id",
 		"delivery_address",
+		"delivery_latitude",
+		"delivery_longitude",
 		"expected_delivery_time",
 	];
 	const uploadColumns = [
@@ -66,7 +87,9 @@ export default function UploadInventoryWidget({
 			key: "expected_delivery_time" as keyof ItemUploadFormData,
 			header: "Expected Delivery",
 			render: (value: unknown) =>
-				new Date(value as string).toLocaleDateString(),
+				adjustEDDToTodayDate(moment.utc(value as string))
+					.local()
+					.format("MMM DD, YYYY - HH:mm"),
 		},
 	];
 

@@ -27,7 +27,7 @@ export default function ManagePage() {
       stats: 'Assign deliveries to riders'
     },
     {
-      title: 'Add Pickup Items',
+      title: 'Add & Dispatch Pickup Items',
       description: 'Add dynamic pickup tasks for items that need to be collected from various locations.',
       href: '/manage/pickup',
       icon: '📋',

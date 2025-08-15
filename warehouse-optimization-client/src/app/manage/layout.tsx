@@ -16,7 +16,7 @@ export default function ManageLayout({
     { href: '/manage/inventory', label: 'Manage Inventory', icon: '📦' },
     { href: '/manage/riders', label: 'Manage Riders', icon: '🚴‍♂️' },
     { href: '/manage/dispatch', label: 'Dispatch Deliveries', icon: '🚚' },
-    { href: '/manage/pickup', label: 'Add Pickup Items', icon: '📋' },
+    { href: '/manage/pickup', label: 'Add & Dispatch Pickup Items', icon: '📋' },
   ];
 
   return (

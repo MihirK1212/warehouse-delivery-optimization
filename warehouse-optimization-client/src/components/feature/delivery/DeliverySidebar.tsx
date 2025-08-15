@@ -194,11 +194,11 @@ export default function DeliverySidebar({
 													/>
 												</svg>
 												<p className="text-xs text-gray-600">
-													{moment(
+													{moment.utc(
 														delivery
 															.deliveryInformation
 															.expectedDeliveryTime
-													).format("MMM DD, HH:mm")}
+													).local().format("MMM DD, HH:mm")}
 												</p>
 											</div>
 

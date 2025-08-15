@@ -1,5 +1,6 @@
 import { useMemo } from "react";
 import { DeliveryTask } from "@/types/delivery/type";
+import { DeliveryStatus } from "@/types/deliveryStatus";
 
 export default function PickupStats({
 	pickupTasks,
@@ -8,16 +9,19 @@ export default function PickupStats({
 }) {
 	const undispatchedPickups = useMemo(
 		() =>
-			pickupTasks.filter((task) => task.status === "undispatched").length,
+			pickupTasks.filter((task) => task.status === DeliveryStatus.UNDISPATCHED).length,
 		[pickupTasks]
 	);
 	const inProgressPickups = useMemo(
 		() =>
-			pickupTasks.filter((task) => task.status === "in_progress").length,
+			pickupTasks.filter((task) => task.status === DeliveryStatus.IN_PROGRESS).length,
 		[pickupTasks]
 	);
 	const completedPickups = useMemo(
-		() => pickupTasks.filter((task) => task.status === "completed").length,
+		() =>
+			pickupTasks.filter(
+				(task) => task.status === DeliveryStatus.COMPLETED
+			).length,
 		[pickupTasks]
 	);
 	return (

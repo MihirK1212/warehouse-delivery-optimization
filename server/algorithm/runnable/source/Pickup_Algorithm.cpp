@@ -110,8 +110,8 @@ int main ()
 {
     srand(time(0));
 
-    string name = "pickup_input";
-    freopen((name+".in").c_str(), "r", stdin);
+    // string name = "pickup_input";
+    // freopen((name+".in").c_str(), "r", stdin);
     
     int current_time;
     cin>>current_time;

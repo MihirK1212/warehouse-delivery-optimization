@@ -13,12 +13,12 @@ export const deliveryTaskAdapter = (deliveryTask: DeliveryTaskDTO): DeliveryTask
             description: item.description,
             toolScanInformation: item.tool_scan_information,
             itemLocation: item.item_location,
-            timestampCreated: moment(item.timestamp_created),
+            timestampCreated: moment.utc(item.timestamp_created),
         })),
         deliveryInformation: {
             expectedDeliveryTime:
-                deliveryTask.delivery_information
-                    .expected_delivery_time,
+                moment.utc(deliveryTask.delivery_information
+                    .expected_delivery_time),
             deliveryType:
                 deliveryTask.delivery_information.delivery_type,
             awbId: deliveryTask.delivery_information.awb_id,

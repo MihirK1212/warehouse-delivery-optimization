@@ -120,9 +120,9 @@ export default function DataTable<T extends Record<string, unknown>>({
 									/>
 								</th>
 							)}
-							{columns.map((column) => (
+							{columns.map((column, index) => (
 								<th
-									key={String(column.key)}
+									key={`${String(column.key)}-${index}`}
 									className={`px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider ${
 										column.sortable
 											? "cursor-pointer hover:bg-gray-100"
@@ -182,6 +182,7 @@ export default function DataTable<T extends Record<string, unknown>>({
 						{sortedData.length === 0 ? (
 							<tr>
 								<td
+									key={`empty-${Date.now()}`}
 									colSpan={
 										columns.length + (selectable ? 1 : 0)
 									}
@@ -201,7 +202,10 @@ export default function DataTable<T extends Record<string, unknown>>({
 									}`}
 								>
 									{selectable && (
-										<td className="px-6 py-4 whitespace-nowrap">
+										<td
+											key={`selectable-${index}`}
+											className="px-6 py-4 whitespace-nowrap"
+										>
 											<input
 												type="checkbox"
 												checked={selectedRows.has(
@@ -214,9 +218,9 @@ export default function DataTable<T extends Record<string, unknown>>({
 											/>
 										</td>
 									)}
-									{columns.map((column) => (
+									{columns.map((column, columnIndex) => (
 										<td
-											key={String(column.key)}
+											key={`${String(column.key)}-${columnIndex}-${index}`}
 											className="px-6 py-4 whitespace-nowrap text-sm text-gray-900"
 										>
 											{column.render

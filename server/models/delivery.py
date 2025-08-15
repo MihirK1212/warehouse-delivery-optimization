@@ -1,7 +1,7 @@
 from pydantic import Field
 from typing import Literal, List, Optional
 from beanie import Document, Link, PydanticObjectId
-from ..schemas import RouteSegment, DeliveryInformation
+from ..schemas import RouteSegment, DeliveryInformation, Coordinate 
 from .rider import Rider
 from .item import Item
 from ..enums import DeliveryStatus

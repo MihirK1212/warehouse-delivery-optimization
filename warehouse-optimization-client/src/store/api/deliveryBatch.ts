@@ -1,8 +1,5 @@
 import { api } from "./base";
-import {
-	CreateItemAndDeliveryTaskDTO,
-	DispatchDeliveryTasksDTO,
-} from "@/types/delivery/dto";
+import { DispatchDeliveryTasksDTO, DispatchPickupDeliveryTasksDTO } from "@/types/delivery/dto";
 import { DeliveryTasksBatchDTO } from "@/types/deliveryBatch/dto";
 import { DeliveryTasksBatch } from "@/types/deliveryBatch/type";
 import { deliveryTasksBatchAdapter } from "@/types/deliveryBatch/adapter";
@@ -16,19 +13,7 @@ const deliveryBatchAPI = api.injectEndpoints({
 				method: "POST",
 				body: payload,
 			}),
-			invalidatesTags: ["Rider", "DeliveryTask"],
-		}),
-
-		addDynamicPickupDeliveryTasks: build.mutation<
-			void,
-			CreateItemAndDeliveryTaskDTO[]
-		>({
-			query: (pickupItems) => ({
-				url: "delivery_batch/pickup",
-				method: "POST",
-				body: pickupItems,
-			}),
-			invalidatesTags: ["Rider", "DeliveryTask"],
+			invalidatesTags: ["Rider", "DeliveryTask", "DeliveryTasksBatch"],
 		}),
 
 		getDeliveryTasksBatchForRider: build.query<DeliveryTasksBatch, string>({
@@ -36,8 +21,12 @@ const deliveryBatchAPI = api.injectEndpoints({
 				url: `delivery_batch/rider/${riderId}`,
 				method: "GET",
 			}),
-			providesTags: (result, error, id) => [{ type: "DeliveryTasksBatch", id }],
-			transformResponse: (response: DeliveryTasksBatchDTO): DeliveryTasksBatch => {
+			providesTags: (result, error, id) => [
+				{ type: "DeliveryTasksBatch", id },
+			],
+			transformResponse: (
+				response: DeliveryTasksBatchDTO
+			): DeliveryTasksBatch => {
 				return deliveryTasksBatchAdapter(response);
 			},
 		}),
@@ -59,13 +48,25 @@ const deliveryBatchAPI = api.injectEndpoints({
 			],
 		}),
 
+		dispatchPickupDeliveryTask: build.mutation<
+			void,
+			DispatchPickupDeliveryTasksDTO
+		>({
+			query: (payload) => ({
+				url: "delivery_batch/pickup",
+				method: "POST",
+				body: payload.delivery_task_ids,
+			}),
+			invalidatesTags: ["Rider", "DeliveryTask", "DeliveryTasksBatch",],
+		}),
+
 	}),
 	overrideExisting: false,
 });
 
 export const {
 	useDispatchDeliveryTasksMutation,
-	useAddDynamicPickupDeliveryTasksMutation,
 	useGetDeliveryTasksBatchForRiderQuery,
 	useUpdateDeliveryTaskStatusMutation,
+	useDispatchPickupDeliveryTaskMutation,
 } = deliveryBatchAPI;

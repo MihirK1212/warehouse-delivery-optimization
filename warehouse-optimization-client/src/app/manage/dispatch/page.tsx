@@ -19,11 +19,18 @@ export default function DispatchDeliveriesPage() {
 	>([]);
 	const [isDispatchModalOpen, setIsDispatchModalOpen] = useState(false);
 	const {
-		data: undispatchedTasks = [],
+		data: allUndispatchedTasks = [],
 		isLoading: isLoadingTasks,
 		refetch: refetchTasks,
 	} = useGetUndispatchedDeliveryTasksQuery();
 	const { data: riders = [] } = useGetRidersQuery();
+
+	const undispatchedDeliveryTasks = useMemo(() => {
+		return _.filter(
+			allUndispatchedTasks,
+			(task) => task.deliveryInformation.deliveryType === "delivery"
+		);
+	}, [allUndispatchedTasks]);
 
 	const totalVolume = useMemo(
 		() =>
@@ -45,14 +52,14 @@ export default function DispatchDeliveriesPage() {
 			<DispatchHeader onOpen={() => setIsDispatchModalOpen(true)} />
 
 			<DispatchStats
-				pendingCount={undispatchedTasks.length}
+				pendingCount={undispatchedDeliveryTasks.length}
 				selectedTasksCount={selectedDeliveries.length}
 				availableRidersCount={riders.length}
 				totalVolume={totalVolume}
 			/>
 
 			<DeliveriesGrid
-				tasks={undispatchedTasks}
+				tasks={undispatchedDeliveryTasks}
 				isLoading={isLoadingTasks}
 				selectedDeliveries={selectedDeliveries}
 				onSelect={setSelectedDeliveries}
@@ -66,7 +73,9 @@ export default function DispatchDeliveriesPage() {
 			>
 				<DispatchWidget
 					deliveries={selectedDeliveries}
-					availableRiders={_.filter(riders, (rider) => _.isEmpty(rider.assignedDeliveryTaskIds))}
+					availableRiders={_.filter(riders, (rider) =>
+						_.isEmpty(rider.assignedDeliveryTaskIds)
+					)}
 					onDispatched={() => {
 						setSelectedDeliveries([]);
 						refetchTasks();

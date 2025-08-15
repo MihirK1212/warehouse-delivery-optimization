@@ -1,1 +1,1 @@
-from .base import WarehouseMockClock
+from .base import WarehouseClock

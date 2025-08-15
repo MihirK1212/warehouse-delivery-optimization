@@ -97,9 +97,9 @@ export default function DeliveryCard({
 			<div className="mb-4">
 				<p className="text-xs text-gray-500">Expected Delivery</p>
 				<p className="text-sm font-medium">
-					{moment(
-						delivery.deliveryInformation.expectedDeliveryTime
-					).format("MMM DD, YYYY - HH:mm")}
+					{moment.utc(delivery.deliveryInformation.expectedDeliveryTime)
+						.local()
+						.format("MMM DD, YYYY - HH:mm")}
 				</p>
 			</div>
 		</div>

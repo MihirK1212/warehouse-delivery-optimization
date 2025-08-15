@@ -21,3 +21,8 @@ export interface CreateItemAndDeliveryTaskDTO {
 	item: CreateItemDTO;
 	delivery_information: DeliveryInformationDTO;
 }
+
+
+export interface DispatchPickupDeliveryTasksDTO {
+	delivery_task_ids: string[];
+}

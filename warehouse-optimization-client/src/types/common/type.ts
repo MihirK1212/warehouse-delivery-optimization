@@ -22,7 +22,7 @@ export type RouteSegment = {
 }
 
 export type DeliveryInformation = {
-    expectedDeliveryTime: string;
+    expectedDeliveryTime: moment.Moment;
     deliveryType: string;
     awbId: string;
     deliveryLocation: DeliveryLocation;

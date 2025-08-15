@@ -26,6 +26,8 @@ export type PickupItemFormData = {
   pickup_address: string;
   pickup_latitude: number;
   pickup_longitude: number;
+  volume: number;
+  weight: number;
   delivery_address: string;
   delivery_latitude: number;
   delivery_longitude: number;

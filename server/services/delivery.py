@@ -7,6 +7,7 @@ from ..models.item import Item
 from ..crud import delivery as delivery_crud
 from ..schemas import DeliveryInformation
 from ..enums import DeliveryStatus
+from ..clock import WarehouseClock
 
 
 class DeliveryService:
@@ -58,6 +59,10 @@ class DeliveryService:
     async def create_item_and_delivery_task(
         item: Item, delivery_information: DeliveryInformation
     ) -> DeliveryTask:
+        assert (
+            delivery_information.expected_delivery_time
+            > WarehouseClock().get_day_start_timestamp()
+        ), "Expected delivery time must be in the future"
         return await delivery_crud.create_item_and_delivery_task(
             item, delivery_information
         )

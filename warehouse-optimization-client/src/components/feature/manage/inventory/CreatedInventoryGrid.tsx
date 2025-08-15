@@ -58,7 +58,7 @@ export default function CreatedInventoryGrid({
 			header: "Created",
 			render: (value: Item[keyof Item]) => {
 				const timestamp = value as moment.Moment;
-				return moment(timestamp).format("DD/MM/YYYY HH:mm") || "N/A";
+				return moment.utc(timestamp).local().format("DD/MM/YYYY HH:mm") || "N/A";
 			},
 			sortable: true,
 		},

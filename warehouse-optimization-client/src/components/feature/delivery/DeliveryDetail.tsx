@@ -180,16 +180,16 @@ export default function DeliveryDetail({
 									Expected Delivery Time
 								</p>
 								<p className="text-gray-900 font-medium">
-									{moment(
+									{moment.utc(
 										delivery.deliveryInformation
 											.expectedDeliveryTime
-									).format("MMMM DD, YYYY")}
+									).local().format("MMMM DD, YYYY")}
 								</p>
 								<p className="text-gray-900 font-medium">
-									{moment(
+									{moment.utc(
 										delivery.deliveryInformation
 											.expectedDeliveryTime
-									).format("hh:mm A")}
+									).local().format("hh:mm A")}
 								</p>
 							</div>
 							<div>
@@ -197,7 +197,7 @@ export default function DeliveryDetail({
 									Time Remaining
 								</p>
 								<p className="text-gray-900 font-medium">
-									{moment(
+									{moment.utc(
 										delivery.deliveryInformation
 											.expectedDeliveryTime
 									).fromNow()}

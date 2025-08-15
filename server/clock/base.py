@@ -1,6 +1,11 @@
-from datetime import datetime
+import datetime
 
-class WarehouseMockClock():
-    def get_day_start_timestamp(self) -> datetime:
-        # TODO: remove this later
-        return datetime.strptime("2025-08-03T10:56:15.696809", "%Y-%m-%dT%H:%M:%S.%f")
+
+class WarehouseClock:
+    def get_day_start_timestamp(self) -> datetime.datetime:
+        """
+        Returns the start of the day in UTC.
+        """
+        # IST 10.00 am, UTC 4.30 am
+        now = datetime.datetime.now(datetime.timezone.utc)
+        return now.replace(hour=4, minute=30, second=0, microsecond=0, tzinfo=datetime.timezone.utc)

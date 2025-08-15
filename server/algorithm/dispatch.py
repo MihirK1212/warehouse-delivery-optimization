@@ -2,20 +2,20 @@ from typing import List
 from subprocess import Popen, PIPE
 import datetime
 
-from ..models.delivery import DeliveryTask
+from ..dtos import DeliveryTaskDTO
 from ..models.rider import Rider
 from .dto import DispatchedDeliveryTask
 from .map import distance as map_distance_service
 from ..schemas import Coordinate
 from ..constants import WAREHOUSE_LOCATION
 from ..models.item import Item
-from ..clock import WarehouseMockClock
+from ..clock import WarehouseClock
 
 
 class DispatchAlgorithm:
     @classmethod
     def dispatch(
-        cls, delivery_tasks: List[DeliveryTask], riders: List[Rider]
+        cls, delivery_tasks: List[DeliveryTaskDTO], riders: List[Rider]
     ) -> List[DispatchedDeliveryTask]:
         num_deliveries = len(delivery_tasks)
         num_riders = len(riders)
@@ -51,13 +51,17 @@ class DispatchAlgorithm:
             p.stdin.write(str(int(item.tool_scan_information.volume)) + "\n")
             f.write(str(int(item.tool_scan_information.volume)) + "\n")
 
-        current_time = WarehouseMockClock().get_day_start_timestamp()
+        day_start_timestamp = WarehouseClock().get_day_start_timestamp()
 
         for delivery_task in delivery_tasks:
             expected_delivery_time = (
                 delivery_task.delivery_information.expected_delivery_time
             )
-            edd_delta = expected_delivery_time - current_time
+            # Ensure both datetimes are timezone-aware for calculation
+            if expected_delivery_time.tzinfo is None:
+                expected_delivery_time = expected_delivery_time.replace(tzinfo=datetime.timezone.utc)
+            
+            edd_delta = expected_delivery_time - day_start_timestamp
             p.stdin.write(str(int(edd_delta.total_seconds())) + "\n")
             f.write(str(int(edd_delta.total_seconds())) + "\n")
 
@@ -119,7 +123,7 @@ class DispatchAlgorithm:
 
     @classmethod
     def _get_delivery_tasks_and_warehouse_pairwise_distance_matrix(
-        cls, delivery_tasks: List[DeliveryTask]
+        cls, delivery_tasks: List[DeliveryTaskDTO]
     ) -> List[List[float]]:
         """
         This function returns a pairwise distance matrix for a list of coordinates.
@@ -132,23 +136,15 @@ class DispatchAlgorithm:
         pairwise_distance_matrix = map_distance_service.get_pairwise_distance_matrix(
             coordinates
         )
-
-        # TODO: remove this later
-        pairwise_distance_matrix = [
-            [int(distance) // 100 for distance in row]
-            for row in pairwise_distance_matrix
-        ]
-
         return pairwise_distance_matrix
 
     @classmethod
-    def _validate_delivery_tasks(cls, delivery_tasks: List[DeliveryTask]):
+    def _validate_delivery_tasks(cls, delivery_tasks: List[DeliveryTaskDTO]):
         for delivery_task in delivery_tasks:
             assert (
                 len(delivery_task.items) == 1
             ), "Each delivery task must have exactly one item, currently only one item is supported"
 
-        for delivery_task in delivery_tasks:
             assert (
                 delivery_task.delivery_information is not None
             ), "Delivery task's delivery information must be provided"
@@ -162,9 +158,15 @@ class DispatchAlgorithm:
             assert (
                 delivery_task.delivery_information.expected_delivery_time is not None
             ), "Delivery task's expected delivery time must be provided"
+            expected_delivery_time = delivery_task.delivery_information.expected_delivery_time
+            warehouse_day_start = WarehouseClock().get_day_start_timestamp()
+            
+            # Ensure both datetimes are timezone-aware for comparison
+            if expected_delivery_time.tzinfo is None:
+                expected_delivery_time = expected_delivery_time.replace(tzinfo=datetime.timezone.utc)
+            
             assert (
-                delivery_task.delivery_information.expected_delivery_time
-                > WarehouseMockClock().get_day_start_timestamp()
+                expected_delivery_time > warehouse_day_start
             ), "Delivery task's expected delivery time must be in the future"
 
             item = Item(**delivery_task.items[0].model_dump())
