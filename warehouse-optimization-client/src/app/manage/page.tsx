@@ -34,6 +34,14 @@ export default function ManagePage() {
       color: 'bg-orange-500',
       stats: 'Schedule pickup operations'
     },
+    {
+      title: 'Monitor Deliveries',
+      description: 'View all deliveries and their statuses. Monitor the progress of deliveries and riders.',
+      href: '/manage/monitor',
+      icon: '👀',
+      color: 'bg-red-500',
+      stats: 'Monitor deliveries and riders'
+    }
   ];
 
   return (

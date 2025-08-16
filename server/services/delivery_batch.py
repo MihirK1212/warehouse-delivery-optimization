@@ -264,6 +264,15 @@ class DeliveryBatchService:
         )
 
     @classmethod
+    async def get_delivery_tasks_for_today(
+        cls
+    ) -> List[DeliveryTaskDTO]:
+        """
+        This method is used to get the delivery tasks for today.
+        """
+        return await delivery_batch_crud.get_delivery_tasks_batches()
+
+    @classmethod
     async def get_delivery_tasks_batch_for_rider(
         cls, rider_id: PydanticObjectId
     ) -> DeliveryTasksBatchDTO:

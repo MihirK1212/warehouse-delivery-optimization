@@ -29,3 +29,10 @@ export type DeliveryInformation = {
     awbId: string;
     deliveryLocation: DeliveryLocation;
 }
+
+
+export type GoogleMapDynamicDirectionsRoute = {
+    startLocation: DeliveryLocation;
+    endLocation: DeliveryLocation;
+    stops?: DeliveryLocation[];
+}

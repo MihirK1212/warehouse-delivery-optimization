@@ -16,6 +16,19 @@ const deliveryBatchAPI = api.injectEndpoints({
 			invalidatesTags: ["Rider", "DeliveryTask", "DeliveryTasksBatch"],
 		}),
 
+		getDeliveryTasksBatchesForToday: build.query<DeliveryTasksBatch[], void>({
+			query: () => ({
+				url: "delivery_batch/today",
+				method: "GET",
+			}),
+			transformResponse: (
+				response: DeliveryTasksBatchDTO[]
+			): DeliveryTasksBatch[] => {
+				return response.map(deliveryTasksBatchAdapter);
+			},
+			providesTags: ["DeliveryTasksBatch"],
+		}),
+
 		getDeliveryTasksBatchForRider: build.query<DeliveryTasksBatch, string>({
 			query: (riderId) => ({
 				url: `delivery_batch/rider/${riderId}`,
@@ -66,6 +79,7 @@ const deliveryBatchAPI = api.injectEndpoints({
 
 export const {
 	useDispatchDeliveryTasksMutation,
+	useGetDeliveryTasksBatchesForTodayQuery,
 	useGetDeliveryTasksBatchForRiderQuery,
 	useUpdateDeliveryTaskStatusMutation,
 	useDispatchPickupDeliveryTaskMutation,

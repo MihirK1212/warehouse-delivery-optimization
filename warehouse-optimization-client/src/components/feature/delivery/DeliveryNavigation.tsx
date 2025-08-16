@@ -1,7 +1,5 @@
+import GoogleMapDynamicDirections from "@/components/common/GoogleMapDynamicDirections";
 import { DeliveryLocation, RouteSegment } from "@/types/common/type";
-import _ from "lodash";
-import { useState } from "react";
-
 
 export default function DeliveryNavigation({
 	deliveryStartLocation,
@@ -12,19 +10,47 @@ export default function DeliveryNavigation({
 	deliveryEndLocation?: DeliveryLocation;
 	taskRoute: RouteSegment[];
 }) {
-    // for now ignore the taskRoute - we will use the deliveryStartLocation and deliveryEndLocation only to directly display the route on the map
-    
-    const deliveryStartCoordinate = deliveryStartLocation?.coordinate;
-    const deliveryEndCoordinate = deliveryEndLocation?.coordinate;
+	if (!deliveryStartLocation || !deliveryEndLocation) {
+		return (
+			<div className="flex items-center justify-center h-full p-4 bg-gray-100 rounded-lg">
+				<p className="text-gray-500">
+					No route found - please check the route
+				</p>
+			</div>
+		);
+	}
 
-    if (!deliveryStartCoordinate || !deliveryEndCoordinate) {
-        return <div>No route found - please check the route</div>;
-    }
-
-	return <div>
-		<div>
-			<h3>{deliveryStartCoordinate.latitude}, {deliveryStartCoordinate.longitude}</h3>
-			<h3>{deliveryEndCoordinate.latitude}, {deliveryEndCoordinate.longitude}</h3>
+	return (
+		<div className="p-4 bg-white rounded-lg shadow-md">
+			<div className="mb-4">
+				<h3 className="text-lg font-semibold text-gray-800">Delivery Route</h3>
+				<div className="flex justify-between mt-2 text-sm text-gray-600">
+					<div>
+						<p className="font-medium">Start</p>
+						<p>
+							{deliveryStartLocation.address} - 
+							{deliveryStartLocation.coordinate.latitude.toFixed(4)},{" "}
+							{deliveryStartLocation.coordinate.longitude.toFixed(4)}
+						</p>
+					</div>
+					<div>
+						<p className="font-medium text-right">End</p>
+						<p>
+							{deliveryEndLocation.address} - 
+							{deliveryEndLocation.coordinate.latitude.toFixed(4)},{" "}
+							{deliveryEndLocation.coordinate.longitude.toFixed(4)}
+						</p>
+					</div>
+				</div>
+			</div>
+			<GoogleMapDynamicDirections
+				routes={[
+					{
+						startLocation: deliveryStartLocation, 
+						endLocation: deliveryEndLocation,
+					}
+				]}
+			/>
 		</div>
-	</div>;
+	);
 }

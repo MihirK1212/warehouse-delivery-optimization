@@ -26,12 +26,17 @@ async def dispatch_delivery_tasks(
 
 @router.post("/pickup", response_model=List[PickupDeliveryBatchAssignmentDTO])
 async def dispatch_dynamic_pickup_delivery_tasks(
-    delivery_task_ids: List[PydanticObjectId]
+    delivery_task_ids: List[PydanticObjectId],
 ):
     print("delivery_task_ids", delivery_task_ids)
     return await DeliveryBatchService.dispatch_dynamic_pickup_delivery_tasks(
         delivery_task_ids
     )
+
+
+@router.get("/today", response_model=List[DeliveryTasksBatchDTO])
+async def get_delivery_tasks_for_today():
+    return await DeliveryBatchService.get_delivery_tasks_for_today()
 
 
 @router.get("/rider/{rider_id}", response_model=DeliveryTasksBatchDTO)
