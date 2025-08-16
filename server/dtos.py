@@ -29,14 +29,16 @@ class CreateItemAndDeliveryTaskDTO(BaseModel):
 
 
 class DeliveryTaskDTO(DeliveryTask):
-    items: List[Item]
-    rider: Optional[Rider]
-
+    items: List[Item] # type: ignore
+    
     def get_task_coordinate(self) -> Coordinate:
         if self.delivery_information.delivery_type == "delivery":
             return self.delivery_information.delivery_location.coordinate
         elif self.delivery_information.delivery_type == "pickup":
-            return self.items[0].item_location.coordinate
+            item = self.items[0]
+            if not item.item_location:
+                raise ValueError("Item location is not set")
+            return item.item_location.coordinate
 
 
 class UpdateDeliveryTaskStatusDTO(BaseModel):
@@ -44,7 +46,7 @@ class UpdateDeliveryTaskStatusDTO(BaseModel):
 
 
 class RiderDTO(Rider):
-    assigned_delivery_task_ids: List[PydanticObjectId]
+    assigned_delivery_tasks_batch_id: Optional[PydanticObjectId] = None
 
 
 class DeliveryTaskRefDTO(DeliveryTaskRef):
@@ -54,7 +56,7 @@ class DeliveryTaskRefDTO(DeliveryTaskRef):
 
 class DeliveryTasksBatchDTO(DeliveryTasksBatch):
     rider: Rider
-    tasks: List[DeliveryTaskRefDTO]
+    tasks: List[DeliveryTaskRefDTO] # type: ignore
 
     def get_time_for_task(self, delivery_task: DeliveryTaskDTO) -> float:
         """
@@ -63,7 +65,7 @@ class DeliveryTasksBatchDTO(DeliveryTasksBatch):
         delivery_task_route_segment = next(
             (
                 segment
-                for segment in self.batch_route
+                for segment in self.batch_route or []
                 if segment.task_delivery_id == delivery_task.id
             ),
             None,
@@ -104,7 +106,7 @@ class DeliveryTasksBatchDTO(DeliveryTasksBatch):
         next_task_route = next(
             (
                 segment
-                for segment in self.batch_route
+                for segment in self.batch_route or []
                 if segment.task_delivery_id == next_task.delivery_task.id
             ),
             None,

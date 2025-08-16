@@ -54,4 +54,6 @@ async def scan_item(item_id: PydanticObjectId, weight: float, volume: float) -> 
             "volume": volume
         }
         await item.save()
-    return item
+        return item
+    else:
+        raise HTTPException(status_code=404, detail="Item not found")

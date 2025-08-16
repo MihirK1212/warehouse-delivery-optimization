@@ -10,11 +10,11 @@ from ..crud import delivery as delivery_crud
 
 async def create_delivery_tasks_batch(
     delivery_tasks_batch: DeliveryTasksBatch,
-) -> DeliveryTasksBatch:
+) -> DeliveryTasksBatch | None:
     """
     This is the function to create a delivery tasks batch.
     """
-    return await DeliveryTasksBatch.insert_one(delivery_tasks_batch)
+    return await DeliveryTasksBatch.insert_one(delivery_tasks_batch) or None
 
 
 async def get_delivery_tasks_batch(
@@ -24,6 +24,8 @@ async def get_delivery_tasks_batch(
     This is the function to get a delivery tasks batch.
     """
     delivery_tasks_batch = await DeliveryTasksBatch.get(delivery_tasks_batch_id)
+    if delivery_tasks_batch is None:
+        raise HTTPException(status_code=404, detail="Delivery tasks batch not found")
     delivery_tasks_batch_dto = await _populate_delivery_tasks_batch(
         delivery_tasks_batch
     )
@@ -56,9 +58,9 @@ async def update_delivery_tasks_batch(
     delivery_tasks_batch = await DeliveryTasksBatch.get(delivery_tasks_batch_id)
     if delivery_tasks_batch:
         await delivery_tasks_batch.set(update_dict)
+        return delivery_tasks_batch
     else:
         raise HTTPException(status_code=404, detail="Delivery tasks batch not found")
-
 
 async def _populate_delivery_tasks_batch(
     delivery_tasks_batch: DeliveryTasksBatch,
@@ -67,9 +69,11 @@ async def _populate_delivery_tasks_batch(
     This is the function to perform actions after dispatching delivery tasks.
     """
     if delivery_tasks_batch.rider is not None:
-        delivery_tasks_batch.rider = await rider_crud.get_rider(
-            delivery_tasks_batch.rider.ref.id
-        )
+        rider = await rider_crud.get_rider(delivery_tasks_batch.rider.ref.id)
+        if rider is None:
+            raise HTTPException(status_code=404, detail="Rider not found")
+        delivery_tasks_batch.rider = rider
+
     delivery_tasks_batch.tasks = sorted(
         [
             DeliveryTaskRefDTO(

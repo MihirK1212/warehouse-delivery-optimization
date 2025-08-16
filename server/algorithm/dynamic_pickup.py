@@ -26,10 +26,20 @@ class DynamicPickupAlgorithm:
     ) -> PickupDeliveryBatchAssignmentDTO:
 
         delivery_tasks_batches = copy.deepcopy(delivery_tasks_batches)
+        original_delivery_tasks_batches = copy.deepcopy(delivery_tasks_batches)
+
+        if delivery_tasks_batches is None or original_delivery_tasks_batches is None:
+            raise ValueError("Delivery tasks batches cannot be None")
 
         delivery_tasks_batches = (
             cls._filter_delivery_tasks_batches_with_only_pending_tasks(
                 delivery_tasks_batches
+            )
+        )
+
+        num_tasks_removed_delivery_task_batch = (
+            cls._get_num_tasks_removed_delivery_task_batches(
+                original_delivery_tasks_batches, delivery_tasks_batches
             )
         )
 
@@ -48,6 +58,9 @@ class DynamicPickupAlgorithm:
         ).total_seconds()
 
         pickup_item = delivery_task.items[0]
+        assert (
+            pickup_item.tool_scan_information is not None
+        ), "Pickup item must have tool scan information"
 
         num_riders = len(delivery_tasks_batches)
 
@@ -109,9 +122,15 @@ class DynamicPickupAlgorithm:
                 # this is the time that will be taken to go from given task to next task
                 time_next = cls._get_time_next(task.delivery_task, delivery_tasks_batch)
 
-                time_from_pickup = delivery_task_to_pickup_distance_map[
-                    task.delivery_task.id
-                ]
+                delivery_task_id = task.delivery_task.id
+                assert delivery_task_id is not None, "Delivery task id must be provided"
+                time_from_pickup = delivery_task_to_pickup_distance_map.get(
+                    delivery_task_id, float(0.0)
+                )
+
+                assert (
+                    task_item.tool_scan_information is not None
+                ), "Task item must have tool scan information"
 
                 p.stdin.write(str(int(task_item.tool_scan_information.volume)) + "\n")
                 p.stdin.write(str(task_type) + "\n")
@@ -137,11 +156,21 @@ class DynamicPickupAlgorithm:
         p.stdin.flush()
 
         batch_index = int(p.stdout.readline().strip())
-        after_task_index = int(p.stdout.readline().strip())
-
-        print(batch_index, after_task_index)
-
+        if batch_index == -1:
+            return PickupDeliveryBatchAssignmentDTO(
+                assigned_delivery_tasks_batch_id=None,
+                after_task_index=None,
+            )
         assigned_delivery_tasks_batch_id = delivery_tasks_batches[batch_index].id
+
+        after_task_index = int(p.stdout.readline().strip())
+        after_task_index = max(after_task_index, 0)
+        
+        if assigned_delivery_tasks_batch_id is not None:
+            after_task_index += num_tasks_removed_delivery_task_batch.get(
+                assigned_delivery_tasks_batch_id, 0
+            )  # this is to account for the tasks that were removed from the batch
+
         return PickupDeliveryBatchAssignmentDTO(
             assigned_delivery_tasks_batch_id=assigned_delivery_tasks_batch_id,
             after_task_index=after_task_index,
@@ -192,15 +221,49 @@ class DynamicPickupAlgorithm:
         pickup_item: Item,
         delivery_tasks_batches: List[DeliveryTasksBatchDTO],
     ) -> dict[PydanticObjectId, float]:
+        assert (
+            pickup_item.item_location is not None
+        ), "Pickup item must have item location"
         res: dict[PydanticObjectId, float] = {}
         for delivery_tasks_batch in delivery_tasks_batches:
             for task in delivery_tasks_batch.tasks:
+                assert (
+                    task.delivery_task.id is not None
+                ), "Delivery task id must be provided"
                 distance = map_distance_service.get_simulated_temporal_distance(
                     pickup_item.item_location.coordinate,
                     task.delivery_task.delivery_information.delivery_location.coordinate,
                 )
                 res[task.delivery_task.id] = distance
 
+        return res
+
+    @classmethod
+    def _get_num_tasks_removed_delivery_task_batches(
+        cls,
+        before_delivery_tasks_batches: List[DeliveryTasksBatchDTO],
+        after_delivery_tasks_batches: List[DeliveryTasksBatchDTO],
+    ) -> dict[PydanticObjectId, int]:
+        res: dict[PydanticObjectId, int] = {}
+        for before_delivery_tasks_batch in before_delivery_tasks_batches:
+            assert (
+                before_delivery_tasks_batch.id is not None
+            ), "Delivery tasks batch id must be provided"
+            after_delivery_tasks_batch = next(
+                (
+                    batch
+                    for batch in after_delivery_tasks_batches
+                    if batch.id == before_delivery_tasks_batch.id
+                ),
+                None,
+            )
+            if after_delivery_tasks_batch is None:
+                num_removed = len(before_delivery_tasks_batch.tasks)
+            else:
+                num_removed = len(before_delivery_tasks_batch.tasks) - len(
+                    after_delivery_tasks_batch.tasks
+                )
+            res[before_delivery_tasks_batch.id] = num_removed
         return res
 
     @classmethod
@@ -215,7 +278,9 @@ class DynamicPickupAlgorithm:
         # only one batch per rider
         rider_ids = set()
         for batch in delivery_tasks_batches:
-            assert isinstance(batch, DeliveryTasksBatchDTO), "Delivery tasks batches must be of type DeliveryTasksBatchDTO"
+            assert isinstance(
+                batch, DeliveryTasksBatchDTO
+            ), "Delivery tasks batches must be of type DeliveryTasksBatchDTO"
 
             rider_id = getattr(batch.rider, "id", None)
             if rider_id is None:

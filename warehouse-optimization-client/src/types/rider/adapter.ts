@@ -8,6 +8,6 @@ export const riderAdapter = (rider: RiderDTO): Rider => {
         age: rider.age,
         bagVolume: rider.bag_volume,
         phoneNumber: rider.phone_number,
-        assignedDeliveryTaskIds: rider.assigned_delivery_task_ids,
+        assignedDeliveryTasksBatchId: rider.assigned_delivery_tasks_batch_id,
     }
 }   

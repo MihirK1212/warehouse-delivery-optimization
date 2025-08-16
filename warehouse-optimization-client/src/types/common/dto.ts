@@ -15,6 +15,8 @@ export interface DeliveryLocationDTO {
 }
 
 export interface RouteSegmentDTO {
+    start_location: DeliveryLocationDTO;
+    end_location: DeliveryLocationDTO;
     distance: number;
     time_taken: number;
     instruction: string;

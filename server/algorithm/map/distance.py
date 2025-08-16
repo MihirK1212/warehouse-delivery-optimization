@@ -41,18 +41,18 @@ def get_simulated_temporal_distance(
 
     # Adjust speed based on distance scale (short trips are slower due to stops)
     if road_distance_km < 2:
-        avg_speed_kmh = 15
+        avg_speed_kmh = 15.0
     elif road_distance_km < 10:
-        avg_speed_kmh = 25
+        avg_speed_kmh = 25.0
     elif road_distance_km < 30:
-        avg_speed_kmh = 35
+        avg_speed_kmh = 35.0
     else:
-        avg_speed_kmh = 50
+        avg_speed_kmh = 50.0
 
     # Terrain penalty: reduce speed if elevation gain > 0
     if elevation_diff_m > 0:
         terrain_penalty_factor = 1 - min(elevation_diff_m / 1000 * 0.05, 0.15)
-        avg_speed_kmh *= terrain_penalty_factor
+        avg_speed_kmh = avg_speed_kmh * terrain_penalty_factor
 
     # Calculate time in hours, then convert to seconds
     estimated_time_hours = road_distance_km / avg_speed_kmh
@@ -69,7 +69,7 @@ def get_simulated_temporal_distance(
     return distance
 
 
-def get_pairwise_distance_matrix(coordinates: List[Coordinate]) -> List[List[float]]:
+def get_pairwise_distance_matrix(coordinates: List[Coordinate]) -> List[List[int]]:
     """
     This function returns a pairwise distance matrix for a list of coordinates.
     """

@@ -15,9 +15,11 @@ export type DeliveryLocation = {
 }
 
 export type RouteSegment = {
-    distance: number;
-    timeTaken: number;
-    instruction: string;
+    startLocation: DeliveryLocation;
+    endLocation: DeliveryLocation;
+    distance?: number;
+    timeTaken?: number;
+    instruction?: string;
     polyline: Coordinate[];
 }
 

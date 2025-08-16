@@ -1,7 +1,6 @@
 import { CreateItemDTO, ItemDTO } from "../item/dto";
 import { RiderDTO } from "../rider/dto";
 import { DeliveryInformationDTO } from "../common/dto";
-import { RouteSegmentDTO } from "../common/dto";
 
 export interface DeliveryTaskDTO {
 	_id?: string;
@@ -9,7 +8,6 @@ export interface DeliveryTaskDTO {
 	delivery_information: DeliveryInformationDTO;
 	rider?: RiderDTO;
 	status: string;
-	delivery_route: RouteSegmentDTO[];
 }
 
 export interface DispatchDeliveryTasksDTO {

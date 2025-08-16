@@ -58,10 +58,10 @@ export default function PickupTasksGrid({
 			),
 		},
 		{
-			key: "deliveryInformation" as keyof DeliveryTask,
-			header: "Delivery Address",
+			key: "items" as keyof DeliveryTask,
+			header: "Pickup Address",
 			render: (value: DeliveryTask[keyof DeliveryTask]) =>
-				(value as DeliveryInformation)?.deliveryLocation?.address ||
+			_.first(value as Item[])?.itemLocation?.address ||
 				"N/A",
 			width: "w-1/3",
 		},
@@ -79,12 +79,6 @@ export default function PickupTasksGrid({
 							.format("MMM DD, YYYY - HH:mm")
 					: "N/A",
 			sortable: true,
-		},
-		{
-			key: "rider" as keyof DeliveryTask,
-			header: "Assigned Rider",
-			render: (value: DeliveryTask[keyof DeliveryTask]) =>
-				(value as Rider)?.name || "Unassigned",
 		},
 		{
 			key: "id" as keyof DeliveryTask,

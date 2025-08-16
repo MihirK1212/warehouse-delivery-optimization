@@ -2,6 +2,7 @@
 
 import { DeliveryTask } from "@/types/delivery/type";
 import moment from "moment";
+import { getDeliveryLocation } from "@/utils/delivery";
 
 interface DeliveryCardProps {
 	delivery: DeliveryTask;
@@ -16,6 +17,9 @@ export default function DeliveryCard({
 	isSelected,
 	isDisabled,
 }: DeliveryCardProps) {
+
+	const deliveryLocation = getDeliveryLocation(delivery);
+
 	const totalVolume = delivery.items.reduce(
 		(sum, item) => sum + (item.toolScanInformation?.volume || 0),
 		0
@@ -72,7 +76,7 @@ export default function DeliveryCard({
 						/>
 					</svg>
 					<p className="text-sm text-gray-700 line-clamp-2">
-						{delivery.deliveryInformation.deliveryLocation.address}
+						{deliveryLocation?.address || "N/A"}
 					</p>
 				</div>
 			</div>

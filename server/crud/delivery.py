@@ -14,7 +14,10 @@ async def get_delivery_task(
     """
     This is the function to get a delivery by its id.
     """
-    return await _populate_delivery_task_links(await DeliveryTask.get(delivery_task_id))
+    delivery_task = await DeliveryTask.get(delivery_task_id)
+    if delivery_task is None:
+        raise HTTPException(status_code=404, detail="Delivery task not found")
+    return await _populate_delivery_task_links(delivery_task)
 
 
 async def get_delivery_tasks() -> List[DeliveryTaskDTO]:
@@ -47,18 +50,18 @@ async def update_delivery_task(
     delivery_task = await DeliveryTask.get(delivery_task_id)
     if delivery_task:
         await delivery_task.set(update_dict)
+        return delivery_task
     else:
         raise HTTPException(status_code=404, detail="Dispatched delivery not found")
 
 
 async def create_delivery_tasks(
     delivery_tasks: List[DeliveryTask],
-) -> List[DeliveryTask]:
+) -> None:
     """
     This is the function to create delivery tasks.
     """
-    return await DeliveryTask.insert_many(delivery_tasks)
-
+    await DeliveryTask.insert_many(delivery_tasks) 
 
 async def create_item_and_delivery_task(
     item: Item, delivery_information: DeliveryInformation
@@ -83,6 +86,7 @@ async def update_delivery_task_status(
     if delivery_task:
         delivery_task.status = status.name
         await delivery_task.save()
+        return delivery_task
     else:
         raise HTTPException(status_code=404, detail="Delivery task not found")
 
@@ -94,10 +98,7 @@ async def _populate_delivery_task_links(delivery_task: DeliveryTask) -> Delivery
     if not delivery_task:
         raise HTTPException(status_code=404, detail="Delivery task not found")
 
-    delivery_task.rider = (
-        await Rider.get(delivery_task.rider.ref.id) if delivery_task.rider else None
-    )
-    delivery_task.items = [await Item.get(item.ref.id) for item in delivery_task.items]
+    delivery_task.items = [i for i in [await Item.get(item.ref.id) for item in delivery_task.items] if i is not None]
 
     return DeliveryTaskDTO(**delivery_task.model_dump())
 

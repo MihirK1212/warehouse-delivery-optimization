@@ -74,7 +74,7 @@ export default function DispatchDeliveriesPage() {
 				<DispatchWidget
 					deliveries={selectedDeliveries}
 					availableRiders={_.filter(riders, (rider) =>
-						_.isEmpty(rider.assignedDeliveryTaskIds)
+						_.isNil(rider.assignedDeliveryTasksBatchId)
 					)}
 					onDispatched={() => {
 						setSelectedDeliveries([]);

@@ -15,7 +15,7 @@ class DeliveryTaskRef(BaseModel):
 
 
 # route to get to current_task_index
-class DeliveryTaskBatchRouteSegment(BaseModel):
+class DeliveryTasksBatchRouteSegment(BaseModel):
     prev_task_delivery_id: Optional[PydanticObjectId] = (
         None  # for first task, this is None
     )
@@ -23,10 +23,10 @@ class DeliveryTaskBatchRouteSegment(BaseModel):
     route: List[RouteSegment]
 
     def total_distance(self) -> float:
-        return sum(segment.distance for segment in self.route)
+        return sum(segment.distance or 0 for segment in self.route)
 
     def total_time_taken(self) -> float:
-        return sum(segment.time_taken for segment in self.route)
+        return sum(segment.time_taken or 0 for segment in self.route)
 
 
 class DeliveryTasksBatch(Document):
@@ -47,7 +47,7 @@ class DeliveryTasksBatch(Document):
     created_at: datetime.datetime = Field(
         default_factory=lambda: datetime.datetime.now(datetime.timezone.utc)
     )
-    batch_route: Optional[List[DeliveryTaskBatchRouteSegment]] = []
+    batch_route: Optional[List[DeliveryTasksBatchRouteSegment]] = []
 
     def is_current_day_tasks_batch(self) -> bool:
         # the batch route date should be today in IST timezone

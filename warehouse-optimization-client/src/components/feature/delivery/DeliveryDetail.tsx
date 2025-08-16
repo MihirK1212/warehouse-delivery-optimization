@@ -4,15 +4,23 @@ import { DeliveryTask } from "@/types/delivery/type";
 import { useUpdateDeliveryTaskStatusMutation } from "@/store/api/deliveryBatch";
 import moment from "moment";
 import { DeliveryStatus } from "@/types/deliveryStatus";
+import { DeliveryLocation, RouteSegment } from "@/types/common/type";
+import DeliveryNavigation from "./DeliveryNavigation";
+import { getDeliveryLocation } from "@/utils/delivery";
 
 interface DeliveryDetailProps {
 	delivery: DeliveryTask | undefined;
 	onClose: () => void;
+	navigationMetadata: {
+		deliveryStartLocation?: DeliveryLocation;
+		taskRoute: RouteSegment[];
+	};
 }
 
 export default function DeliveryDetail({
 	delivery,
 	onClose,
+	navigationMetadata,
 }: DeliveryDetailProps) {
 	const [updateStatus, { isLoading: isUpdating }] =
 		useUpdateDeliveryTaskStatusMutation();
@@ -32,7 +40,7 @@ export default function DeliveryDetail({
 			} catch (error) {
 				console.error("Failed to update status:", error);
 			} finally {
-				if(nextStatus === DeliveryStatus.COMPLETED) {
+				if (nextStatus === DeliveryStatus.COMPLETED) {
 					onClose();
 					window.location.reload();
 				}
@@ -44,6 +52,8 @@ export default function DeliveryDetail({
 		onClose();
 		return <div>Delivery not found</div>;
 	}
+
+	const deliveryLocation = getDeliveryLocation(delivery);
 
 	const totalVolume = delivery.items.reduce(
 		(sum, item) => sum + (item.toolScanInformation?.volume || 0),
@@ -139,20 +149,12 @@ export default function DeliveryDetail({
 								: "Drop Point"}
 						</h3>
 						<p className="text-gray-700 mb-2">
-							{
-								delivery.deliveryInformation.deliveryLocation
-									.address
-							}
+							{deliveryLocation?.address}
 						</p>
 						<p className="text-sm text-gray-500">
 							Coordinates:{" "}
-							{delivery.deliveryInformation.deliveryLocation.coordinate.latitude.toFixed(
-								6
-							)}
-							,{" "}
-							{delivery.deliveryInformation.deliveryLocation.coordinate.longitude.toFixed(
-								6
-							)}
+							{deliveryLocation?.coordinate.latitude.toFixed(6)},{" "}
+							{deliveryLocation?.coordinate.longitude.toFixed(6)}
 						</p>
 					</div>
 
@@ -180,16 +182,22 @@ export default function DeliveryDetail({
 									Expected Delivery Time
 								</p>
 								<p className="text-gray-900 font-medium">
-									{moment.utc(
-										delivery.deliveryInformation
-											.expectedDeliveryTime
-									).local().format("MMMM DD, YYYY")}
+									{moment
+										.utc(
+											delivery.deliveryInformation
+												.expectedDeliveryTime
+										)
+										.local()
+										.format("MMMM DD, YYYY")}
 								</p>
 								<p className="text-gray-900 font-medium">
-									{moment.utc(
-										delivery.deliveryInformation
-											.expectedDeliveryTime
-									).local().format("hh:mm A")}
+									{moment
+										.utc(
+											delivery.deliveryInformation
+												.expectedDeliveryTime
+										)
+										.local()
+										.format("hh:mm A")}
 								</p>
 							</div>
 							<div>
@@ -197,10 +205,12 @@ export default function DeliveryDetail({
 									Time Remaining
 								</p>
 								<p className="text-gray-900 font-medium">
-									{moment.utc(
-										delivery.deliveryInformation
-											.expectedDeliveryTime
-									).fromNow()}
+									{moment
+										.utc(
+											delivery.deliveryInformation
+												.expectedDeliveryTime
+										)
+										.fromNow()}
 								</p>
 							</div>
 						</div>
@@ -247,12 +257,6 @@ export default function DeliveryDetail({
 								</p>
 								<p className="text-xl font-bold text-gray-900">
 									{totalWeight.toFixed(2)} kg
-								</p>
-							</div>
-							<div>
-								<p className="text-sm text-gray-500">Rider</p>
-								<p className="text-xl font-bold text-gray-900">
-									{delivery.rider?.name || "Unassigned"}
 								</p>
 							</div>
 						</div>
@@ -305,56 +309,16 @@ export default function DeliveryDetail({
 							))}
 						</div>
 					</div>
+				</div>
 
-					{/* Route Information */}
-					{delivery.deliveryRoute &&
-						delivery.deliveryRoute.length > 0 && (
-							<div className="bg-gray-50 rounded-lg p-4">
-								<h3 className="text-lg font-semibold text-gray-900 mb-3 flex items-center">
-									<svg
-										className="w-5 h-5 text-gray-500 mr-2"
-										fill="none"
-										stroke="currentColor"
-										viewBox="0 0 24 24"
-									>
-										<path
-											strokeLinecap="round"
-											strokeLinejoin="round"
-											strokeWidth={2}
-											d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-1.447-.894L15 4m0 13V4m0 0L9 7"
-										/>
-									</svg>
-									Route Instructions
-								</h3>
-								<div className="space-y-2">
-									{delivery.deliveryRoute.map(
-										(segment, index) => (
-											<div
-												key={index}
-												className="flex items-start space-x-3 p-2 bg-white rounded border"
-											>
-												<span className="flex-shrink-0 w-6 h-6 bg-blue-100 text-blue-800 rounded-full flex items-center justify-center text-xs font-medium">
-													{index + 1}
-												</span>
-												<div className="flex-1">
-													<p className="text-sm text-gray-900">
-														{segment.instruction}
-													</p>
-													<p className="text-xs text-gray-500">
-														{segment.distance}m •{" "}
-														{Math.round(
-															segment.timeTaken /
-																60
-														)}{" "}
-														min
-													</p>
-												</div>
-											</div>
-										)
-									)}
-								</div>
-							</div>
-						)}
+				<div className="flex-shrink-0 px-6 py-4 border-t border-gray-200 bg-gray-50">
+					<DeliveryNavigation
+						deliveryStartLocation={
+							navigationMetadata.deliveryStartLocation
+						}
+						deliveryEndLocation={deliveryLocation}
+						taskRoute={navigationMetadata.taskRoute}
+					/>
 				</div>
 			</div>
 

@@ -43,7 +43,7 @@ class DispatchAlgorithm:
                     p.stdin.write(str(0) + "\n")
                     f.write(str(int(0)) + "\n")
                     continue
-                p.stdin.write(str(delivery_tasks_pairwise_distance_matrix[i][j]) + "\n")
+                p.stdin.write(str(int(delivery_tasks_pairwise_distance_matrix[i][j])) + "\n")
                 f.write(str(int(delivery_tasks_pairwise_distance_matrix[i][j])) + "\n")
 
         for delivery_task in delivery_tasks:
@@ -104,7 +104,10 @@ class DispatchAlgorithm:
 
             while True:
 
-                result = int(p.stdout.readline().strip())
+                result = p.stdout.readline().strip()
+                if result == "" or result=='':
+                    break
+                result = int(result)
 
                 if result == -1:
                     break
@@ -112,10 +115,14 @@ class DispatchAlgorithm:
                 order.append(int(result) - 1)
 
             for delivery_ind in order:
+                delivery_task_id = delivery_tasks[delivery_ind].id
+                rider_id = riders[rider_ind].id
+                assert delivery_task_id is not None, "Delivery task id must be provided"
+                assert rider_id is not None, "Rider id must be provided"
                 dispatched_delivery_tasks.append(
                     DispatchedDeliveryTask(
-                        delivery_id=delivery_tasks[delivery_ind].id,
-                        rider_id=riders[rider_ind].id,
+                        delivery_id=delivery_task_id,
+                        rider_id=rider_id,
                     )
                 )
 

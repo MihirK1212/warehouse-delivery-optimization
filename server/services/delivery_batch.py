@@ -3,21 +3,18 @@ from collections import defaultdict
 from fastapi import HTTPException
 from beanie import PydanticObjectId
 import asyncio
-import datetime
 
 from ..dtos import (
-    CreateItemAndDeliveryTaskDTO,
     DeliveryTaskDTO,
     DeliveryTasksBatchDTO,
     PickupDeliveryBatchAssignmentDTO,
 )
-from ..models.delivery import DeliveryTask, Rider
+from ..models.delivery import DeliveryTask
 from ..models.delivery_batch import DeliveryTaskRef, DeliveryTasksBatch
 from ..crud import delivery as delivery_crud
 from ..crud import delivery_batch as delivery_batch_crud
 from ..crud import rider as rider_crud
 from ..algorithm.dispatch import DispatchAlgorithm
-from ..crud import rider as rider_crud
 from ..enums import DeliveryStatus
 from .delivery import DeliveryService
 from ..algorithm.dynamic_pickup import DynamicPickupAlgorithm
@@ -46,7 +43,6 @@ class DeliveryBatchService:
         assert all(
             [
                 delivery_task.status == DeliveryStatus.UNDISPATCHED.name
-                and delivery_task.rider is None
                 and delivery_task.delivery_information.delivery_type == "delivery"
                 for delivery_task in delivery_tasks
             ]
@@ -55,6 +51,7 @@ class DeliveryBatchService:
         assert len(rider_ids) == len(set(rider_ids)), "Rider ids must be unique"
 
         for delivery_task in delivery_tasks:
+            assert delivery_task.id is not None, "Delivery task id must be provided"
             await delivery_crud.update_delivery_task(
                 delivery_task.id, {DeliveryTask.status: DeliveryStatus.DISPATCHING.name}
             )
@@ -75,7 +72,6 @@ class DeliveryBatchService:
                 await delivery_crud.update_delivery_task(
                     dispatched_delivery_task.delivery_id,
                     {
-                        DeliveryTask.rider: dispatched_delivery_task.rider_id,
                         DeliveryTask.status: DeliveryStatus.DISPATCHED.name,
                     },
                 )
@@ -85,10 +81,11 @@ class DeliveryBatchService:
                     rider=rider_id,
                     tasks=[
                         DeliveryTaskRef(
-                            delivery_task=delivery_task_id,
+                            delivery_task=delivery_task_id,  # type: ignore
                             order_key=i,
                         )
                         for i, delivery_task_id in enumerate(delivery_task_ids)
+                        if delivery_task_id is not None
                     ],
                 )
                 await delivery_batch_crud.create_delivery_tasks_batch(
@@ -102,11 +99,11 @@ class DeliveryBatchService:
 
         except Exception as e:
             for delivery_task in delivery_tasks:
+                assert delivery_task.id is not None, "Delivery task id must be provided"
                 await delivery_crud.update_delivery_task(
                     delivery_task.id,
                     {
                         DeliveryTask.status: DeliveryStatus.UNDISPATCHED.name,
-                        DeliveryTask.rider: None,
                     },
                 )
             raise e
@@ -127,7 +124,10 @@ class DeliveryBatchService:
             )
             assert pickup_delivery_task.status == DeliveryStatus.UNDISPATCHED.name
             assert pickup_delivery_task.delivery_information.delivery_type == "pickup"
-            assert pickup_delivery_task.rider is None
+
+            assert (
+                pickup_delivery_task.id is not None
+            ), "Pickup delivery task id must be provided"
 
             await delivery_crud.update_delivery_task(
                 pickup_delivery_task.id,
@@ -147,6 +147,14 @@ class DeliveryBatchService:
                     ),
                     timeout=10,
                 )
+
+                assert (
+                    pickup_delivery_batch_assignment.assigned_delivery_tasks_batch_id
+                    is not None
+                ), "Assigned delivery tasks batch id must be provided"
+                assert (
+                    pickup_delivery_batch_assignment.after_task_index is not None
+                ), "After task index must be provided"
 
                 await cls.add_delivery_task_to_delivery_tasks_batch(
                     pickup_delivery_batch_assignment.assigned_delivery_tasks_batch_id,
@@ -207,7 +215,7 @@ class DeliveryBatchService:
 
         if len(tasks) == 0:
             updated_tasks = [
-                DeliveryTaskRef(delivery_task=delivery_task_id, order_key=0)
+                DeliveryTaskRef(delivery_task=delivery_task_id, order_key=0)  # type: ignore
             ]
         else:
             prev_task_order_key = tasks[after_task_index].order_key
@@ -219,20 +227,20 @@ class DeliveryBatchService:
             updated_tasks = (
                 [
                     DeliveryTaskRef(
-                        delivery_task=task.delivery_task.id,
+                        delivery_task=task.delivery_task.id,  # type: ignore
                         order_key=task.order_key,
                     )
                     for task in tasks[: after_task_index + 1]
                 ]
                 + [
                     DeliveryTaskRef(
-                        delivery_task=delivery_task_id,
+                        delivery_task=delivery_task_id,  # type: ignore
                         order_key=((prev_task_order_key + next_task_order_key) / 2),
                     )
                 ]
                 + [
                     DeliveryTaskRef(
-                        delivery_task=task.delivery_task.id,
+                        delivery_task=task.delivery_task.id,  # type: ignore
                         order_key=task.order_key,
                     )
                     for task in tasks[after_task_index + 1 :]
@@ -316,6 +324,9 @@ class DeliveryBatchService:
 
         delivery_task = await delivery_crud.get_delivery_task(delivery_task_id)
         if delivery_task.status == DeliveryStatus.COMPLETED.name:
+            assert (
+                delivery_tasks_batch.id is not None
+            ), "Delivery tasks batch id must be provided"
             await delivery_batch_crud.update_delivery_tasks_batch(
                 delivery_tasks_batch.id,
                 {

@@ -4,7 +4,7 @@ export interface RiderDTO {
     age: number;
     bag_volume: number;
     phone_number: string;
-    assigned_delivery_task_ids: string[];
+    assigned_delivery_tasks_batch_id: string;
 }
 
 

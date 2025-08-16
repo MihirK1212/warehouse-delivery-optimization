@@ -1,8 +1,7 @@
 from pydantic import Field
-from typing import Literal, List, Optional
-from beanie import Document, Link, PydanticObjectId
-from ..schemas import RouteSegment, DeliveryInformation, Coordinate 
-from .rider import Rider
+from typing import Literal, List
+from beanie import Document, Link
+from ..schemas import DeliveryInformation 
 from .item import Item
 from ..enums import DeliveryStatus
 
@@ -17,11 +16,7 @@ class DeliveryTask(Document):
         ..., description="The delivery information"
     )
 
-    rider: Optional[Link[Rider]] = Field(
-        None, description="The rider assigned to the delivery"
-    )
-
-    status: Literal[
+    status: Literal[ # type: ignore
         DeliveryStatus.UNDISPATCHED.name,
         DeliveryStatus.DISPATCHING.name,
         DeliveryStatus.DISPATCHED.name,

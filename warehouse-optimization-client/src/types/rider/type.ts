@@ -5,7 +5,7 @@ export type Rider = {
     age: number;
     bagVolume: number;
     phoneNumber: string;
-    assignedDeliveryTaskIds: string[];
+    assignedDeliveryTasksBatchId: string;
 }
 
 
