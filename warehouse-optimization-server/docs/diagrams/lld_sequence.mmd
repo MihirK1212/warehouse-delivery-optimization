@@ -1,0 +1,29 @@
+sequenceDiagram
+    autonumber
+    participant C as Client
+    participant API as FastAPI Router
+    participant S as DeliveryBatchService
+    participant D as Delivery CRUD
+    participant R as Rider CRUD
+    participant ALG as DispatchAlgorithm
+    participant DB as MongoDB (Beanie)
+
+    C->>API: POST /delivery_batch/dispatch
+    API->>S: dispatch_delivery_tasks(delivery_task_ids, rider_ids)
+    S->>D: get_delivery_tasks()
+    S->>R: get_riders()
+    loop mark tasks DISPATCHING
+        S->>D: update_delivery_task(id, status=DISPATCHING)
+        D->>DB: update document
+        DB-->>D: ok
+    end
+    S->>ALG: dispatch(tasks, riders)
+    ALG-->>S: assignments (rider_id -> [delivery_task_id])
+    par create batches and mark DISPATCHED
+        S->>D: update_delivery_task(id, status=DISPATCHED)
+        D->>DB: update document
+        S->>DB: insert DeliveryTasksBatch with DeliveryTaskRef[]
+    end
+    S-->>API: { success, dispatched_delivery_tasks }
+    API-->>C: 200 OK
+
