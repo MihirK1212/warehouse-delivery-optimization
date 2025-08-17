@@ -1,0 +1,100 @@
+classDiagram
+    class Item {
+      +str name
+      +str description
+      +ToolScanInformation tool_scan_information?
+      +DeliveryLocation item_location?
+      +datetime timestamp_created
+    }
+
+    class ToolScanInformation {
+      +float volume
+      +float weight
+      +datetime timestamp
+    }
+
+    class Coordinate {
+      +float latitude
+      +float longitude
+    }
+
+    class DeliveryLocation {
+      +str address
+      +Coordinate coordinate
+    }
+
+    class RouteSegment {
+      +DeliveryLocation start_location
+      +DeliveryLocation end_location
+      +float distance?
+      +float time_taken?
+      +str instruction?
+      +Coordinate[] polyline?
+    }
+
+    class DeliveryInformation {
+      +datetime expected_delivery_time
+      +"pickup|delivery" delivery_type
+      +str awb_id
+      +DeliveryLocation delivery_location
+    }
+
+    class DeliveryStatus {
+      <<enum>>
+      UNDISPATCHED
+      DISPATCHING
+      DISPATCHED
+      IN_PROGRESS
+      COMPLETED
+      CANCELLED
+    }
+
+    class DeliveryTask {
+      +Link<Item>[] items
+      +DeliveryInformation delivery_information
+      +DeliveryStatus status
+    }
+
+    class Rider {
+      +str name
+      +int age
+      +float bag_volume
+      +str phone_number
+    }
+
+    class DeliveryTaskRef {
+      +Link<DeliveryTask> delivery_task
+      +float order_key
+    }
+
+    class DeliveryTasksBatchRouteSegment {
+      +PydanticObjectId? prev_task_delivery_id
+      +PydanticObjectId task_delivery_id
+      +RouteSegment[] route
+      +float total_distance()
+      +float total_time_taken()
+    }
+
+    class DeliveryTasksBatch {
+      +Link<Rider> rider
+      +datetime route_identifier_timestamp
+      +DeliveryTaskRef[] tasks
+      +int current_task_index
+      +int version
+      +datetime created_at
+      +DeliveryTasksBatchRouteSegment[] batch_route?
+      +bool is_current_day_tasks_batch()
+    }
+
+    Item o-- ToolScanInformation
+    Item o-- DeliveryLocation
+    DeliveryLocation o-- Coordinate
+    RouteSegment o-- DeliveryLocation
+    DeliveryTask --> DeliveryInformation
+    DeliveryTask "1" o-- "*" Item
+    DeliveryTasksBatch "*" o-- "1" Rider
+    DeliveryTasksBatch "1" o-- "*" DeliveryTaskRef
+    DeliveryTaskRef "1" o-- "1" DeliveryTask
+    DeliveryTasksBatch "1" o-- "*" DeliveryTasksBatchRouteSegment
+    DeliveryTasksBatchRouteSegment "1" o-- "*" RouteSegment
+

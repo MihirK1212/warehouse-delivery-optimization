@@ -1,0 +1,54 @@
+erDiagram
+    RIDER ||--o{ DELIVERY_TASKS_BATCH : has
+    DELIVERY_TASKS_BATCH ||--o{ DELIVERY_TASK_REF : contains
+    DELIVERY_TASK ||--o{ DELIVERY_TASK_REF : referenced_by
+    DELIVERY_TASKS_BATCH ||--o{ BATCH_ROUTE_SEGMENT : has
+    DELIVERY_TASK ||--o{ ITEM : links
+
+    RIDER {
+      string id PK
+      string name
+      int age
+      float bag_volume
+      string phone_number
+    }
+
+    ITEM {
+      string id PK
+      string name
+      string description
+      string tool_scan_information
+      string item_location
+      datetime timestamp_created
+    }
+
+    DELIVERY_TASK {
+      string id PK
+      string delivery_information
+      string status
+    }
+
+    DELIVERY_TASKS_BATCH {
+      string id PK
+      string rider_id FK
+      datetime route_identifier_timestamp
+      int current_task_index
+      int version
+      datetime created_at
+    }
+
+    DELIVERY_TASK_REF {
+      string id PK
+      string batch_id FK
+      string delivery_task_id FK
+      float order_key
+    }
+
+    BATCH_ROUTE_SEGMENT {
+      string id PK
+      string batch_id FK
+      string prev_task_delivery_id
+      string task_delivery_id
+      string route
+    }
+
