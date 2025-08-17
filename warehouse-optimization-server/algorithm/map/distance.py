@@ -64,8 +64,6 @@ def get_simulated_temporal_distance(
 
     distance = int(round(estimated_time_seconds))
 
-    # TODO keep for now, remove later once we have actual coordinates instead of dummy coordinates
-    distance = distance // 30
     return distance
 
 

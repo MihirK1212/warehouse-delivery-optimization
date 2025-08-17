@@ -40,6 +40,8 @@ export default function GoogleMapDynamicDirections({
 			return color;
 		};
 		setRouteColors(routes.map(() => getRandomColor()));
+		// Reset directions responses when routes change to ensure map resets
+		setDirectionsResponses([]);
 	}, [routes]);
 
 	const center = useMemo(() => {
