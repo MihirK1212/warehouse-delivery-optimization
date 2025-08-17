@@ -9,10 +9,13 @@
 3. Backend  : Python (FastAPI)
 4. Database : MongoDB 
 
+## Demo Video
+
+https://drive.google.com/file/d/1sUEgliwYlHPQivkyiyKXREpaUcmyZ2vH/view?usp=sharing
+
 ## Backend architecture diagrams
 
 ### Class design
-![Class Design](warehouse-optimization-server/docs/diagrams/class_design.png)
 ```mermaid
 classDiagram
     class Item {
@@ -116,7 +119,6 @@ classDiagram
 ```
 
 ### Database design (ER)
-![ER Design](warehouse-optimization-server/docs/diagrams/er_design.png)
 ```mermaid
 erDiagram
     RIDER ||--o{ DELIVERY_TASKS_BATCH : has
